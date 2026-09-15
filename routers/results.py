@@ -57,19 +57,9 @@ def add_result(
     return RedirectResponse(url="/results/input", status_code=303)
 
 @router.get("/results/stats")
-def results_stats(request: Request, sort: str = "date", filter: str = "all"):
+def results_stats(request: Request):
     with Session(engine) as session:
         results = session.exec(select(RaceResult)).all()
-        result_list = []
-        for r in results:
-            race = session.get(Race, r.race_id)
-            result_list.append({
-                "race_label": race_label(race) if race else "不明なレース",
-                "race_date": race.date if race else "",
-                "first_place": r.first_place, "second_place": r.second_place, "third_place": r.third_place,
-                "hit_umaren": r.hit_umaren, "hit_umatan": r.hit_umatan, "hit_sanrenpuku": r.hit_sanrenpuku,
-                "review_memo": r.review_memo,
-            })
 
     total = len(results)
     umaren_hits = sum(1 for r in results if r.hit_umaren)
@@ -79,17 +69,11 @@ def results_stats(request: Request, sort: str = "date", filter: str = "all"):
     def rate(hits: int) -> float:
         return round(hits / total * 100, 1) if total > 0 else 0.0
 
-    if filter == "hit":
-        result_list = [r for r in result_list if r["hit_umaren"] or r["hit_umatan"] or r["hit_sanrenpuku"]]
-
-    result_list.sort(key=lambda r: r["race_date"], reverse=(sort == "date"))
-
     return templates.TemplateResponse("stats.html", {
-        "request": request, "results": result_list, "total": total,
+        "request": request, "total": total,
         "umaren_hits": umaren_hits, "umaren_rate": rate(umaren_hits),
         "umatan_hits": umatan_hits, "umatan_rate": rate(umatan_hits),
         "sanrenpuku_hits": sanrenpuku_hits, "sanrenpuku_rate": rate(sanrenpuku_hits),
-        "sort": sort, "filter": filter,
     })
 
 @router.get("/search")
@@ -123,4 +107,28 @@ def search_page(request: Request, q: str = ""):
     return templates.TemplateResponse("search.html", {
         "request": request, "q": q,
         "horse_matches": horse_matches, "memo_matches": memo_matches,
+    })
+
+@router.get("/results/list")
+def results_list(request: Request, sort: str = "date", filter: str = "all"):
+    with Session(engine) as session:
+        results = session.exec(select(RaceResult)).all()
+        result_list = []
+        for r in results:
+            race = session.get(Race, r.race_id)
+            result_list.append({
+                "race_label": race_label(race) if race else "不明なレース",
+                "race_date": race.date if race else "",
+                "first_place": r.first_place, "second_place": r.second_place, "third_place": r.third_place,
+                "hit_umaren": r.hit_umaren, "hit_umatan": r.hit_umatan, "hit_sanrenpuku": r.hit_sanrenpuku,
+                "review_memo": r.review_memo,
+            })
+
+    if filter == "hit":
+        result_list = [r for r in result_list if r["hit_umaren"] or r["hit_umatan"] or r["hit_sanrenpuku"]]
+
+    result_list.sort(key=lambda r: r["race_date"], reverse=(sort == "date"))
+
+    return templates.TemplateResponse("results_list.html", {
+        "request": request, "results": result_list, "sort": sort, "filter": filter,
     })

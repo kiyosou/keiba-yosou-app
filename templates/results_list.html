@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}結果一覧{% endblock %}
+{% block content %}
+<h1>結果一覧</h1>
+<p class="page-nav">
+    <a href="/results/list?filter=all">すべて表示</a> |
+    <a href="/results/list?filter=hit">的中のみ表示</a>
+</p>
+<table>
+    <tr><th>レース名</th><th>1着</th><th>2着</th><th>3着</th><th>馬連</th><th>馬単</th><th>3連複</th><th>回顧メモ</th></tr>
+    {% for r in results %}
+    <tr>
+        <td>{{ r.race_label }}</td>
+        <td>{{ r.first_place }}</td>
+        <td>{{ r.second_place }}</td>
+        <td>{{ r.third_place }}</td>
+        <td class="{{ 'stat-hit' if r.hit_umaren else 'stat-miss' }}">{{ "○" if r.hit_umaren else "×" }}</td>
+        <td class="{{ 'stat-hit' if r.hit_umatan else 'stat-miss' }}">{{ "○" if r.hit_umatan else "×" }}</td>
+        <td class="{{ 'stat-hit' if r.hit_sanrenpuku else 'stat-miss' }}">{{ "○" if r.hit_sanrenpuku else "×" }}</td>
+        <td>{{ r.review_memo }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
