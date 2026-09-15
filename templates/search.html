@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}検索{% endblock %}
+{% block content %}
+<h1>検索</h1>
+<div class="card">
+    <form action="/search" method="get" class="form-grid">
+        <label class="full">キーワード(馬名・回顧メモ)
+            <input type="text" name="q" value="{{ q }}" placeholder="例: サンプルホース、前走不利">
+        </label>
+        <div class="full">
+            <button type="submit">検索する</button>
+        </div>
+    </form>
+</div>
+
+{% if q %}
+<h2>馬名の一致({{ horse_matches|length }}件)</h2>
+{% if horse_matches %}
+<table>
+    <tr><th>馬名</th><th>脚質</th><th>タグ</th><th>レース</th></tr>
+    {% for m in horse_matches %}
+    <tr>
+        <td><a href="/horses/profile/{{ m.name }}">{{ m.name }}</a></td>
+        <td>{{ m.running_style }}</td>
+        <td>{{ m.memo_tag }}</td>
+        <td><a href="/horses/ranking-page/{{ m.race_id }}">{{ m.race_label }}</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty-message">一致する馬は見つかりませんでした。</p>
+{% endif %}
+
+<h2>回顧メモの一致({{ memo_matches|length }}件)</h2>
+{% if memo_matches %}
+<table>
+    <tr><th>レース</th><th>回顧メモ</th></tr>
+    {% for m in memo_matches %}
+    <tr>
+        <td>{{ m.race_label }}</td>
+        <td>{{ m.review_memo }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty-message">一致するメモは見つかりませんでした。</p>
+{% endif %}
+{% endif %}
+{% endblock %}

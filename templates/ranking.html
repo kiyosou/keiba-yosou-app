@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}予想ランキング{% endblock %}
+{% block content %}
+<h1>{{ race_label }} 予想ランキング</h1>
+<table>
+    <tr><th>順位</th><th>馬名</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th><th></th></tr>
+    {% for horse in horses %}
+    <tr class="{% if loop.index == 1 %}rank-1{% endif %}">
+        <td>{{ loop.index }}</td>
+        <td><a href="/horses/profile/{{ horse.name }}">{{ horse.name }}</a></td>
+        <td>{{ horse.running_style }}</td>
+        <td>{{ horse.memo_tag }}</td>
+        <td>{{ horse.score }}</td>
+        <td>{{ horse.odds }}</td>
+         <td>
+            <a href="/horses/{{ horse.id }}/edit">編集</a>
+        <form action="/horses/{{ horse.id }}/delete" method="post" style="margin:0;" onsubmit="return confirm('削除しますか？');">
+            <button type="submit">削除</button>
+        </form>
+    </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<p class="page-nav">
+    <a href="/horses/export/{{ race_id }}">CSVエクスポート</a> |
+    <button class="theme-toggle" onclick="openImportModal()" type="button">CSVインポート</button>|
+    <a href="/horses/paste-import/{{ race_id }}">出馬表から取り込み</a>
+</p>
+
+<div class="modal-overlay" id="import-modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeImportModal()">×</button>
+        <h2>馬データ一括インポート</h2>
+        <p>CSVファイル(馬名, 脚質, メモタグ, 過去走内容, コース適性, 展開, 調教, オッズ, パドック補正)を選んでください。</p>
+        <p><a href="/horses/import-template">テンプレートCSVをダウンロード</a></p>
+        <form action="/horses/import/{{ race_id }}" method="post" enctype="multipart/form-data" class="form-grid">
+            <label class="full">CSVファイル
+                <input type="file" name="file" accept=".csv,.xlsx" required>
+            </label>
+            <div class="full">
+                <button type="submit">インポートする</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openImportModal() {
+        document.getElementById('import-modal').classList.add('open');
+    }
+    function closeImportModal() {
+        document.getElementById('import-modal').classList.remove('open');
+    }
+</script>
+{% endblock %}

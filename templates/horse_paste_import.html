@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}出馬表から取り込み{% endblock %}
+{% block content %}
+<h1>出馬表テキストから取り込み</h1>
+<div class="card">
+    <p>JRA公式サイトの出馬表ページで馬柱の部分を選択してコピーし、下に貼り付けて「解析する」を押してください。</p>
+    <form action="/horses/paste-import/{{ race_id }}" method="post">
+        <textarea name="raw_text" rows="10" style="width:100%; font-family:inherit; padding:0.6rem; border:1px solid var(--border); border-radius:4px;">{{ raw_text }}</textarea>
+        <br><br>
+        <button type="submit">解析する</button>
+    </form>
+</div>
+
+{% if entries is not none %}
+<h2>抽出結果({{ entries|length }}頭)</h2>
+{% if entries %}
+<form action="/horses/bulk-add/{{ race_id }}" method="post">
+<div class="import-table">
+    <table>
+    <tr>
+        <th>馬番</th><th>馬名</th><th>オッズ</th><th>脚質</th><th>メモ</th>
+        <th>過去走</th><th>コース適性</th><th>展開</th>
+    </tr>
+    {% for e in entries %}
+    <tr>
+        <td>{{ e.horse_number }}</td>
+        <td>
+            {{ e.name }}
+            <input type="hidden" name="name_{{ loop.index0 }}" value="{{ e.name }}">
+        </td>
+        <td>
+            {{ e.odds }}
+            <input type="hidden" name="odds_{{ loop.index0 }}" value="{{ e.odds or '' }}">
+        </td>
+        <td>
+            <select name="running_style_{{ loop.index0 }}">
+                <option value="" {% if not e.suggested_running_style or e.suggested_running_style == "不明" %}selected{% endif %}>未設定</option>
+                <option value="逃げ" {% if e.suggested_running_style == "逃げ" %}selected{% endif %}>逃げ</option>
+                <option value="先行" {% if e.suggested_running_style == "先行" %}selected{% endif %}>先行</option>
+                <option value="差し" {% if e.suggested_running_style == "差し" %}selected{% endif %}>差し</option>
+                <option value="追込" {% if e.suggested_running_style == "追込" %}selected{% endif %}>追込</option>
+                <option value="不明" {% if e.suggested_running_style == "不明" %}selected{% endif %}>不明</option>
+            </select>
+        </td>
+        <td><input type="text" name="memo_tag_{{ loop.index0 }}" style="width:110px;" placeholder="{{ e.last_race_summary[:15] }}"></td>
+        <td><input type="number" step="0.5" name="past_performance_score_{{ loop.index0 }}" style="width:65px;" value="0"></td>
+        <td><input type="number" step="0.5" name="course_aptitude_score_{{ loop.index0 }}" style="width:65px;" value="0"></td>
+        <td><input type="number" step="0.5" name="pace_score_{{ loop.index0 }}" style="width:65px;" value="0"></td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+<input type="hidden" name="count" value="{{ entries|length }}">
+<br>
+<button type="submit">この内容でまとめて登録する</button>
+</form>
+{% else %}
+<p class="empty-message">解析できませんでした。貼り付けたテキストの形式を確認してください。</p>
+{% endif %}
+{% endif %}
+{% endblock %}

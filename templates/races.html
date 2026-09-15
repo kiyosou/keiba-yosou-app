@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}レース一覧{% endblock %}
+{% block content %}
+<h1>レース一覧</h1>
+<p class="page-nav">
+    並び替え:
+    <a href="/races?sort=date">日付順</a> |
+    <a href="/races?sort=venue">開催場順</a>
+</p>
+{% if races %}
+<ul class="race-list">
+{% for race in races %}
+    <li>
+    <a href="/horses/ranking-page/{{ race.id }}">{{ race.label }}</a>
+    <span class="item-actions">
+        <a href="/races/{{ race.id }}/edit">編集</a>
+        <form action="/races/{{ race.id }}/delete" method="post" onsubmit="return confirm('このレースと、紐づく馬・結果データも全て削除されます。よろしいですか？');">
+            <button type="submit">削除</button>
+        </form>
+    </span>
+    </li>
+{% endfor %}
+</ul>
+{% else %}
+<p class="empty-message">まだレースが登録されていません。</p>
+{% endif %}
+{% endblock %}

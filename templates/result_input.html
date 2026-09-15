@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}レース結果入力{% endblock %}
+{% block content %}
+<h1>レース結果入力</h1>
+<div class="card">
+    <form action="/results/add" method="post" class="form-grid">
+        <label class="full">レース
+            <select name="race_id" required>
+                {% for race in race_options %}
+                <option value="{{ race.id }}">{{ race.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>1着馬名
+            <input type="text" name="first_place" required>
+        </label>
+        <label>2着馬名
+            <input type="text" name="second_place" required>
+        </label>
+        <label>3着馬名
+            <input type="text" name="third_place" required>
+        </label>
+        <label class="full">回顧メモ
+            <input type="text" name="review_memo" placeholder="例: 展開が向いた、パドックの気配通り">
+        </label>
+        <div class="full">
+            <button type="submit">結果を登録する</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

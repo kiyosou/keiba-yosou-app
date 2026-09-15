@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}CSVインポート{% endblock %}
+{% block content %}
+<h1>馬データ一括インポート</h1>
+<div class="card">
+    <p>CSVファイル(1列目から順に:馬名, 脚質, メモタグ, 過去走内容, コース適性, 展開, 調教, オッズ, パドック補正)を選んでください。</p>
+    <form action="/horses/import/{{ race_id }}" method="post" enctype="multipart/form-data" class="form-grid">
+        <label class="full">CSVファイル
+            <input type="file" name="file" accept=".csv" required>
+        </label>
+        <div class="full">
+            <button type="submit">インポートする</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

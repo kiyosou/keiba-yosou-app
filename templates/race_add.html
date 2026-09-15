@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}レース登録{% endblock %}
+{% block content %}
+<h1>レース登録</h1>
+<div class="card">
+    <form action="/races/add" method="post" class="form-grid">
+        <label class="full">レース名
+            <input type="text" name="race_name" placeholder="例: 3歳未勝利、天皇賞(秋)" required>
+        </label>
+        <label class="full">日付
+            <input type="date" name="date" required>
+        </label>
+        <label>開催場
+            <select name="venue" required>
+                <option value="札幌">札幌</option>
+                <option value="函館">函館</option>
+                <option value="福島">福島</option>
+                <option value="新潟">新潟</option>
+                <option value="東京">東京</option>
+                <option value="中山">中山</option>
+                <option value="中京">中京</option>
+                <option value="京都">京都</option>
+                <option value="阪神">阪神</option>
+                <option value="小倉">小倉</option>
+            </select>
+        </label>
+        <label>レース番号
+            <select name="race_number" required>
+                {% for i in range(1, 13) %}
+                <option value="{{ i }}">{{ i }}R</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>芝・ダート
+            <select name="surface" required>
+                <option value="芝">芝</option>
+                <option value="ダート">ダート</option>
+            </select>
+        </label>
+        <label>距離(m)
+            <select name="distance" required>
+                {% for d in range(1000, 3700, 100) %}
+                <option value="{{ d }}">{{ d }}m</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>天気
+            <select name="weather" required>
+                <option value="晴れ">晴れ</option>
+                <option value="曇り">曇り</option>
+                <option value="小雨">小雨</option>
+                <option value="雨">雨</option>
+            </select>
+        </label>
+        <label>馬場状態
+            <select name="track_condition" required>
+                <option value="良">良</option>
+                <option value="稍重">稍重</option>
+                <option value="重">重</option>
+                <option value="不良">不良</option>
+            </select>
+        </label>
+        <div class="full">
+            <button type="submit">レースを登録する</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

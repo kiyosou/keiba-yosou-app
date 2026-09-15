@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}馬データ編集{% endblock %}
+{% block content %}
+<h1>馬データ編集</h1>
+<div class="card">
+    <form action="/horses/{{ horse.id }}/edit" method="post" class="form-grid">
+        <label class="full">レース
+            <select name="race_id" required>
+                {% for race in race_options %}
+                <option value="{{ race.id }}" {% if race.id == horse.race_id %}selected{% endif %}>{{ race.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full">馬名
+            <input type="text" name="name" value="{{ horse.name }}" required>
+        </label>
+        <label>脚質
+            <select name="running_style">
+                <option value="" {% if not horse.running_style %}selected{% endif %}>未設定</option>
+                <option value="逃げ" {% if horse.running_style == "逃げ" %}selected{% endif %}>逃げ</option>
+                <option value="先行" {% if horse.running_style == "先行" %}selected{% endif %}>先行</option>
+                <option value="差し" {% if horse.running_style == "差し" %}selected{% endif %}>差し</option>
+                <option value="追込" {% if horse.running_style == "追込" %}selected{% endif %}>追込</option>
+                <option value="不明">不明</option>
+            </select>
+        </label>
+        <label>メモタグ
+            <input type="text" name="memo_tag" value="{{ horse.memo_tag }}">
+        </label>
+        <label>過去走内容スコア(0-10)
+            <input type="number" step="0.5" name="past_performance_score" value="{{ horse.past_performance_score }}" required>
+        </label>
+        <label>コース・距離適性スコア(0-10)
+            <input type="number" step="0.5" name="course_aptitude_score" value="{{ horse.course_aptitude_score }}" required>
+        </label>
+        <label>展開スコア(0-10)
+            <input type="number" step="0.5" name="pace_score" value="{{ horse.pace_score }}" required>
+        </label>
+        <label>オッズ
+            <input type="number" step="0.1" name="odds" value="{{ horse.odds }}">
+        </label>
+        <div class="full">
+            <button type="submit">更新する</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

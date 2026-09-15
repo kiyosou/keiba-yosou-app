@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}お気に入り馬{% endblock %}
+{% block content %}
+<h1>お気に入り馬</h1>
+<div class="card">
+    <form action="/favorites/add" method="post" class="form-grid">
+        <label>馬名
+            <input type="text" name="horse_name" required>
+        </label>
+        <label>注目理由メモ
+            <input type="text" name="note" placeholder="例: 良血、次走期待">
+        </label>
+        <div class="full">
+            <button type="submit">追加する</button>
+        </div>
+    </form>
+</div>
+
+<h2>登録済みのお気に入り馬</h2>
+{% if favorites %}
+<table>
+    <tr><th>馬名</th><th>メモ</th><th></th></tr>
+    {% for f in favorites %}
+    <tr>
+        <td>{{ f.horse_name }}</td>
+        <td>{{ f.note }}</td>
+        <td>
+            <form action="/favorites/{{ f.id }}/delete" method="post" style="margin:0;">
+                <button type="submit">削除</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty-message">まだお気に入り馬が登録されていません。</p>
+{% endif %}
+{% endblock %}

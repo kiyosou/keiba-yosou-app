@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}馬一覧{% endblock %}
+{% block content %}
+<h1>馬一覧</h1>
+<p class="page-nav">
+    脚質で絞り込み:
+    <a href="/horses">すべて</a> |
+    <a href="/horses?style=逃げ">逃げ</a> |
+    <a href="/horses?style=先行">先行</a> |
+    <a href="/horses?style=差し">差し</a> |
+    <a href="/horses?style=追込">追込</a>
+</p>
+{% if horses %}
+<table>
+    <tr><th>馬名</th><th>レース</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th></tr>
+    {% for h in horses %}
+    <tr>
+        <td><a href="/horses/profile/{{ h.name }}">{{ h.name }}</a></td>
+        <td><a href="/horses/ranking-page/{{ h.race_id }}">{{ h.race_label }}</a></td>
+        <td>{{ h.running_style }}</td>
+        <td>{{ h.memo_tag }}</td>
+        <td>{{ h.score }}</td>
+        <td>{{ h.odds }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty-message">まだ馬データが登録されていません。</p>
+{% endif %}
+{% endblock %}

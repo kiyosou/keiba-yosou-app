@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}馬データ登録{% endblock %}
+{% block content %}
+<h1>馬データ登録</h1>
+{% if race_options %}
+<div class="card">
+    <form action="/horses/add" method="post" class="form-grid">
+        <label class="full">レース
+            <select name="race_id" required>
+                {% for race in race_options %}
+                <option value="{{ race.id }}">{{ race.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full">馬名
+            <input type="text" name="name" required>
+        </label>
+        <label>脚質
+            <select name="running_style">
+                <option value="">未設定</option>
+                <option value="逃げ">逃げ</option>
+                <option value="先行">先行</option>
+                <option value="差し">差し</option>
+                <option value="追込">追込</option>
+                <option value="不明">不明</option>
+            </select>
+        </label>
+        <label>メモタグ
+            <input type="text" name="memo_tag" placeholder="例: 前走不利、上り最速">
+        </label>
+        <label>過去走内容スコア(0-10)
+            <input type="number" step="0.1" name="past_performance_score" required>
+        </label>
+        <label>コース・距離適性スコア(0-10)
+            <input type="number" step="0.1" name="course_aptitude_score" required>
+        </label>
+        <label>展開スコア(0-10)
+            <input type="number" step="0.1" name="pace_score" required>
+        </label>
+        <label>オッズ
+            <input type="number" step="0.1" name="odds">
+        </label>
+        <div class="full">
+            <button type="submit">登録する</button>
+        </div>
+    </form>
+</div>
+{% else %}
+<p class="empty-message">まだレースが登録されていません。先にレースを登録してください。</p>
+{% endif %}
+{% endblock %}

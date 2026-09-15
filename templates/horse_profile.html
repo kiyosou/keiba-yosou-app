@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ horse_name }} 戦績{% endblock %}
+{% block content %}
+<h1>{{ horse_name }} の戦績</h1>
+{% if history %}
+<table>
+    <tr><th>出走歴</th><th>レース</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th></tr>
+    {% for h in history %}
+    <tr>
+        <td>{{ "今走" if loop.index == 1 else (loop.index0 == 1 and "前走" or (loop.index0|string + "走前")) }}</td>
+        <td><a href="/horses/ranking-page/{{ h.race_id }}">{{ h.race_label }}</a></td>
+        <td>{{ h.running_style }}</td>
+        <td>{{ h.memo_tag }}</td>
+        <td>{{ h.score }}</td>
+        <td>{{ h.odds }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty-message">この馬のデータはまだありません。</p>
+{% endif %}
+{% endblock %}
