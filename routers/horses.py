@@ -271,22 +271,30 @@ def horse_edit_submit(
 def horses_list(request: Request, style: str = ""):
     with Session(engine) as session:
         horses = session.exec(select(Horse)).all()
-        horse_list = []
+
+        by_name = {}
         for h in horses:
-            if style and h.running_style != style:
-                continue
             race = session.get(Race, h.race_id)
-            horse_list.append({
+            race_date = race.date if race else ""
+            entry = {
                 "id": h.id,
                 "name": h.name,
                 "race_id": h.race_id,
                 "race_label": race_label(race) if race else "不明なレース",
-                "race_date": race.date if race else "",
+                "race_date": race_date,
                 "running_style": h.running_style,
                 "memo_tag": h.memo_tag,
                 "score": calculate_score(h),
                 "odds": h.odds,
-            })
+            }
+            # 同じ馬名の中で、race_dateが一番新しいものだけを残す
+            if h.name not in by_name or race_date > by_name[h.name]["race_date"]:
+                by_name[h.name] = entry
+
+        horse_list = list(by_name.values())
+        if style:
+            horse_list = [h for h in horse_list if h["running_style"] == style]
+
     horse_list.sort(key=lambda x: x["race_date"], reverse=True)
     return templates.TemplateResponse("horses_list.html", {
         "request": request, "horses": horse_list, "style": style,
