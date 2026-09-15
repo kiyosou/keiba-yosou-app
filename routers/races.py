@@ -35,23 +35,34 @@ def add_race(
     return RedirectResponse(url="/", status_code=303)
 
 @router.get("/races")
-def races_list(request: Request, sort: str = "date"):
+def races_dates(request: Request):
     with Session(engine) as session:
         races = session.exec(select(Race)).all()
+    dates = sorted(set(r.date for r in races), reverse=True)
+    date_list = [{"date": d, "count": sum(1 for r in races if r.date == d)} for d in dates]
+    return templates.TemplateResponse("race_dates.html", {"request": request, "dates": date_list})
+
+@router.get("/races/{date}")
+def races_by_date(request: Request, date: str, sort: str = "venue"):
+    with Session(engine) as session:
+        races = session.exec(select(Race).where(Race.date == date)).all()
 
     if sort == "venue":
-        races = sorted(races, key=lambda r: (r.venue, r.date))
+        races = sorted(races, key=lambda r: (r.venue, r.race_number))
     else:
-        races = sorted(races, key=lambda r: r.date, reverse=True)
+        races = sorted(races, key=lambda r: r.race_number)
 
     race_list = [{"id": r.id, "label": race_label(r)} for r in races]
     return templates.TemplateResponse("races.html", {
-        "request": request, "races": race_list, "sort": sort,
+        "request": request, "races": race_list, "date": date,
     })
 
 @router.post("/races/{race_id}/delete")
 def delete_race(race_id: int):
     with Session(engine) as session:
+        race = session.get(Race, race_id)
+        date = race.date if race else None
+
         horses = session.exec(select(Horse).where(Horse.race_id == race_id)).all()
         for h in horses:
             session.delete(h)
@@ -60,12 +71,11 @@ def delete_race(race_id: int):
         for r in results:
             session.delete(r)
 
-        race = session.get(Race, race_id)
         if race:
             session.delete(race)
 
         session.commit()
-    return RedirectResponse(url="/races", status_code=303)
+    return RedirectResponse(url=f"/races/{date}" if date else "/races", status_code=303)
 
 @router.get("/races/{race_id}/edit")
 def race_edit_page(request: Request, race_id: int):
@@ -98,4 +108,4 @@ def race_edit_submit(
             race.track_condition = track_condition
             session.add(race)
             session.commit()
-    return RedirectResponse(url="/races", status_code=303)
+        return RedirectResponse(url=f"/races/{date}", status_code=303)

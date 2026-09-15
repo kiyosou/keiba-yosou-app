@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}レース一覧{% endblock %}
+{% block content %}
+<h1>レース一覧(日付を選択)</h1>
+{% if dates %}
+<ul class="race-list">
+{% for d in dates %}
+    <li>
+        <a href="/races/{{ d.date }}">{{ d.date }}({{ d.count }}レース)</a>
+    </li>
+{% endfor %}
+</ul>
+{% else %}
+<p class="empty-message">まだレースが登録されていません。</p>
+{% endif %}
+{% endblock %}
