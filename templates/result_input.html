@@ -20,6 +20,11 @@
         <label>3着馬名
             <input type="text" name="third_place" required>
         </label>
+        <datalist id="horse-name-list">
+            {% for n in horse_names %}
+            <option value="{{ n }}">
+            {% endfor %}
+        </datalist>
         <label class="full">回顧メモ
             <input type="text" name="review_memo" placeholder="例: 展開が向いた、パドックの気配通り">
         </label>

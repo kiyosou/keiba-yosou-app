@@ -6,6 +6,7 @@ from database import engine
 from models import Race, RaceResult, Horse
 from scoring import race_label, get_predicted_ranking
 from templates import templates
+from routers.horses import get_all_horse_names
 
 router = APIRouter()
 
@@ -13,8 +14,11 @@ router = APIRouter()
 def result_input_page(request: Request):
     with Session(engine) as session:
         races = session.exec(select(Race)).all()
+        horse_names = get_all_horse_names(session)
     race_options = [{"id": r.id, "label": race_label(r)} for r in races]
-    return templates.TemplateResponse("result_input.html", {"request": request, "race_options": race_options})
+    return templates.TemplateResponse("result_input.html", {
+        "request": request, "race_options": race_options, "horse_names": horse_names,
+    })
 
 @router.post("/results/add")
 def add_result(

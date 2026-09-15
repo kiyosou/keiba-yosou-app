@@ -13,7 +13,12 @@
             </select>
         </label>
         <label class="full">馬名
-            <input type="text" name="name" required>
+            <input type="text" name="name" list="horse-name-list" required>
+            <datalist id="horse-name-list">
+                {% for n in horse_names %}
+                <option value="{{ n }}">
+                {% endfor %}
+            </datalist>
         </label>
         <label>脚質
             <select name="running_style">

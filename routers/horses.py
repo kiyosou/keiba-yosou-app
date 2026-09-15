@@ -13,13 +13,19 @@ from parsing import parse_shutsuba_text
 
 router = APIRouter()
 
+def get_all_horse_names(session: Session) -> list[str]:
+    horses = session.exec(select(Horse)).all()
+    return sorted(set(h.name for h in horses))
+
 @router.get("/horses/new")
 def horse_add_page(request: Request):
     with Session(engine) as session:
         races = session.exec(select(Race)).all()
+        horse_names = get_all_horse_names(session)
     race_options = [{"id": r.id, "label": race_label(r)} for r in races]
-    return templates.TemplateResponse("input.html", {"request": request, "race_options": race_options})
-
+    return templates.TemplateResponse("input.html", {
+        "request": request, "race_options": race_options, "horse_names": horse_names,
+    })
 @router.post("/horses/add")
 def add_horse(
     race_id: int = Form(...),
