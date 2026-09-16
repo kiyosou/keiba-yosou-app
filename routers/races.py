@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
 
 from database import engine
-from models import Race, Horse, RaceResult
+from models import Race, Horse, RaceResult, TrackBias
 from scoring import race_label
 from templates import templates
 
@@ -47,14 +47,26 @@ def races_by_date(request: Request, date: str, sort: str = "venue"):
     with Session(engine) as session:
         races = session.exec(select(Race).where(Race.date == date)).all()
 
-    if sort == "venue":
-        races = sorted(races, key=lambda r: (r.venue, r.race_number))
-    else:
-        races = sorted(races, key=lambda r: r.race_number)
+        if sort == "venue":
+            races = sorted(races, key=lambda r: (r.venue, r.race_number))
+        else:
+            races = sorted(races, key=lambda r: r.race_number)
 
-    race_list = [{"id": r.id, "label": race_label(r)} for r in races]
+        race_list = [{"id": r.id, "label": race_label(r)} for r in races]
+
+        venues = sorted(set(r.venue for r in races))
+        venue_bias = {}
+        for v in venues:
+            bias = session.exec(
+                select(TrackBias).where(TrackBias.date == date, TrackBias.venue == v)
+            ).first()
+            venue_bias[v] = {
+                "turf_bias": bias.turf_bias if bias else "",
+                "dirt_bias": bias.dirt_bias if bias else "",
+            }
+
     return templates.TemplateResponse("races.html", {
-        "request": request, "races": race_list, "date": date,
+        "request": request, "races": race_list, "date": date, "venue_bias": venue_bias,
     })
 
 @router.post("/races/{race_id}/delete")
@@ -109,3 +121,18 @@ def race_edit_submit(
             session.add(race)
             session.commit()
         return RedirectResponse(url=f"/races/{date}", status_code=303)
+
+@router.post("/races/{date}/bias/{venue}")
+def save_track_bias(date: str, venue: str, turf_bias: str = Form(""), dirt_bias: str = Form("")):
+    with Session(engine) as session:
+        bias = session.exec(
+            select(TrackBias).where(TrackBias.date == date, TrackBias.venue == venue)
+        ).first()
+        if bias:
+            bias.turf_bias = turf_bias
+            bias.dirt_bias = dirt_bias
+        else:
+            bias = TrackBias(date=date, venue=venue, turf_bias=turf_bias, dirt_bias=dirt_bias)
+        session.add(bias)
+        session.commit()
+    return RedirectResponse(url=f"/races/{date}", status_code=303)

@@ -3,6 +3,24 @@
 {% block content %}
 <h1>{{ date }} のレース一覧</h1>
 <p class="page-nav"><a href="/races">日付一覧に戻る</a></p>
+
+{% for venue, bias in venue_bias.items() %}
+<div class="card">
+    <h2>{{ venue }} のトラックバイアス</h2>
+    <form action="/races/{{ date }}/bias/{{ venue }}" method="post" class="form-grid">
+        <label class="full">芝のバイアス
+            <input type="text" name="turf_bias" value="{{ bias.turf_bias }}" placeholder="例: 内枠有利、先行有利">
+        </label>
+        <label class="full">ダートのバイアス
+            <input type="text" name="dirt_bias" value="{{ bias.dirt_bias }}" placeholder="例: 外枠有利、差し有利">
+        </label>
+        <div class="full">
+            <button type="submit">保存する</button>
+        </div>
+    </form>
+</div>
+{% endfor %}
+
 {% if races %}
 <ul class="race-list">
 {% for race in races %}

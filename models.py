@@ -38,3 +38,10 @@ class FavoriteHorse(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     horse_name: str
     note: str = ""
+
+class TrackBias(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    date: str
+    venue: str
+    turf_bias: str = ""
+    dirt_bias: str = ""
