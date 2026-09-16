@@ -2,10 +2,47 @@
 {% block title %}結果一覧{% endblock %}
 {% block content %}
 <h1>結果一覧</h1>
+<p class="page-nav"><a href="/races">日付ごとのレース一覧に戻る</a></p>
+
+<div class="card">
+    <form method="get" class="form-grid">
+        <label>競馬場
+            <select name="venue">
+                <option value="">すべて</option>
+                {% for v in venues %}
+                <option value="{{ v }}" {% if v == selected_venue %}selected{% endif %}>{{ v }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>距離(下限)
+            <select name="min_distance">
+                <option value="">指定なし</option>
+                {% for d in distances %}
+                <option value="{{ d }}" {% if d|string == selected_min %}selected{% endif %}>{{ d }}m</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>距離(上限)
+            <select name="max_distance">
+                <option value="">指定なし</option>
+                {% for d in distances %}
+                <option value="{{ d }}" {% if d|string == selected_max %}selected{% endif %}>{{ d }}m</option>
+                {% endfor %}
+            </select>
+        </label>
+        <input type="hidden" name="filter" value="{{ filter }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        <div class="full">
+            <button type="submit">絞り込む</button>
+        </div>
+    </form>
+</div>
+
 <p class="page-nav">
     <a href="/results/list?filter=all">すべて表示</a> |
     <a href="/results/list?filter=hit">的中のみ表示</a>
 </p>
+
 <div class="wide-table">
 <table>
     <tr><th>レース名</th><th>1着</th><th>2着</th><th>3着</th><th>馬連</th><th>馬単</th><th>3連複</th><th>回顧メモ</th></tr>
