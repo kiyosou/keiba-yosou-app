@@ -341,3 +341,26 @@ tr:hover td { background: #FAFBF8; }
   color: var(--gold);
   border-color: var(--gold);
 }
+
+table th {
+  white-space: nowrap;
+}
+
+.wide-table {
+  display: block;
+  overflow-x: auto;
+}
+
+.wide-table table {
+  width: auto;
+  min-width: 100%;
+}
+
+.wide-table td {
+  white-space: nowrap;
+}
+
+.wide-table td.wrap-cell {
+  white-space: normal;
+  max-width: 260px;
+}
