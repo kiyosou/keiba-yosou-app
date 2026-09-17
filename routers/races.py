@@ -35,28 +35,66 @@ def add_race(
     return RedirectResponse(url="/", status_code=303)
 
 @router.get("/races")
-def races_dates(request: Request):
+def races_dates(request: Request, venue: str = "", surface: str = "", min_distance: str = "", max_distance: str = ""):
     with Session(engine) as session:
         races = session.exec(select(Race)).all()
-    dates = sorted(set(r.date for r in races), reverse=True)
-    date_list = [{"date": d, "count": sum(1 for r in races if r.date == d)} for d in dates]
-    return templates.TemplateResponse("race_dates.html", {"request": request, "dates": date_list})
+
+    venues = sorted(set(r.venue for r in races))
+    surfaces = sorted(set(r.surface for r in races))
+    distances = sorted(set(r.distance for r in races))
+
+    filtered = races
+    if venue:
+        filtered = [r for r in filtered if r.venue == venue]
+    if surface:
+        filtered = [r for r in filtered if r.surface == surface]
+    if min_distance:
+        filtered = [r for r in filtered if r.distance >= int(min_distance)]
+    if max_distance:
+        filtered = [r for r in filtered if r.distance <= int(max_distance)]
+
+    dates = sorted(set(r.date for r in filtered), reverse=True)
+    date_list = [{"date": d, "count": sum(1 for r in filtered if r.date == d)} for d in dates]
+
+    return templates.TemplateResponse("race_dates.html", {
+        "request": request, "dates": date_list,
+        "venues": venues, "surfaces": surfaces, "distances": distances,
+        "selected_venue": venue, "selected_surface": surface,
+        "selected_min": min_distance, "selected_max": max_distance,
+    })
 
 @router.get("/races/{date}")
-def races_by_date(request: Request, date: str, sort: str = "venue"):
+def races_by_date(
+    request: Request, date: str, sort: str = "venue",
+    venue: str = "", surface: str = "", min_distance: str = "", max_distance: str = "",
+):
     with Session(engine) as session:
         races = session.exec(select(Race).where(Race.date == date)).all()
 
+        all_venues = sorted(set(r.venue for r in races))
+        all_surfaces = sorted(set(r.surface for r in races))
+        all_distances = sorted(set(r.distance for r in races))
+
+        filtered = races
+        if venue:
+            filtered = [r for r in filtered if r.venue == venue]
+        if surface:
+            filtered = [r for r in filtered if r.surface == surface]
+        if min_distance:
+            filtered = [r for r in filtered if r.distance >= int(min_distance)]
+        if max_distance:
+            filtered = [r for r in filtered if r.distance <= int(max_distance)]
+
         if sort == "venue":
-            races = sorted(races, key=lambda r: (r.venue, r.race_number))
+            filtered = sorted(filtered, key=lambda r: (r.venue, r.race_number))
         else:
-            races = sorted(races, key=lambda r: r.race_number)
+            filtered = sorted(filtered, key=lambda r: r.race_number)
 
-        race_list = [{"id": r.id, "label": race_label(r)} for r in races]
+        race_list = [{"id": r.id, "label": race_label(r)} for r in filtered]
 
-        venues = sorted(set(r.venue for r in races))
+        bias_venues = sorted(set(r.venue for r in races))
         venue_bias = {}
-        for v in venues:
+        for v in bias_venues:
             bias = session.exec(
                 select(TrackBias).where(TrackBias.date == date, TrackBias.venue == v)
             ).first()
@@ -67,6 +105,9 @@ def races_by_date(request: Request, date: str, sort: str = "venue"):
 
     return templates.TemplateResponse("races.html", {
         "request": request, "races": race_list, "date": date, "venue_bias": venue_bias,
+        "venues": all_venues, "surfaces": all_surfaces, "distances": all_distances,
+        "selected_venue": venue, "selected_surface": surface,
+        "selected_min": min_distance, "selected_max": max_distance,
     })
 
 @router.post("/races/{race_id}/delete")

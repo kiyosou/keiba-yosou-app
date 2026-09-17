@@ -2,6 +2,47 @@
 {% block title %}レース一覧{% endblock %}
 {% block content %}
 <h1>レース一覧(日付を選択)</h1>
+
+<div class="card">
+    <form method="get" class="form-grid">
+        <label>競馬場
+            <select name="venue">
+                <option value="">すべて</option>
+                {% for v in venues %}
+                <option value="{{ v }}" {% if v == selected_venue %}selected{% endif %}>{{ v }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>馬場
+            <select name="surface">
+                <option value="">すべて</option>
+                {% for s in surfaces %}
+                <option value="{{ s }}" {% if s == selected_surface %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>距離(下限)
+            <select name="min_distance">
+                <option value="">指定なし</option>
+                {% for d in distances %}
+                <option value="{{ d }}" {% if d|string == selected_min %}selected{% endif %}>{{ d }}m</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>距離(上限)
+            <select name="max_distance">
+                <option value="">指定なし</option>
+                {% for d in distances %}
+                <option value="{{ d }}" {% if d|string == selected_max %}selected{% endif %}>{{ d }}m</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="full">
+            <button type="submit">絞り込む</button>
+        </div>
+    </form>
+</div>
+
 {% if dates %}
 <ul class="race-list">
 {% for d in dates %}
@@ -11,6 +52,6 @@
 {% endfor %}
 </ul>
 {% else %}
-<p class="empty-message">まだレースが登録されていません。</p>
+<p class="empty-message">該当するレースがありません。</p>
 {% endif %}
 {% endblock %}
