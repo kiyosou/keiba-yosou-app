@@ -2,6 +2,9 @@
 {% block title %}予想ランキング{% endblock %}
 {% block content %}
 <h1>{{ race_label }} 予想ランキング</h1>
+{% if back_url %}
+<p class="page-nav"><a href="{{ back_url }}">この日のレース一覧に戻る</a></p>
+{% endif %}
 <table>
     <tr><th>順位</th><th>馬名</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th><th></th></tr>
     {% for horse in horses %}
@@ -26,6 +29,7 @@
     <a href="/horses/export/{{ race_id }}">CSVエクスポート</a> |
     <button class="theme-toggle" onclick="openImportModal()" type="button">CSVインポート</button>|
     <a href="/horses/paste-import/{{ race_id }}">出馬表から取り込み</a>
+    <a href="/results/paste/{{ race_id }}">結果を貼り付けて登録</a>
 </p>
 
 <div class="modal-overlay" id="import-modal">

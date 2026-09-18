@@ -65,7 +65,7 @@
 <ul class="race-list">
 {% for race in races %}
     <li>
-        <a href="/horses/ranking-page/{{ race.id }}">{{ race.label }}</a>
+        <a href="/horses/ranking-page/{{ race.id }}?back_date={{ date }}&venue={{ selected_venue }}&surface={{ selected_surface }}&min_distance={{ selected_min }}&max_distance={{ selected_max }}">{{ race.label }}</a>
         <span class="item-actions">
             <a href="/races/{{ race.id }}/edit">編集</a>
             <form action="/races/{{ race.id }}/delete" method="post" onsubmit="return confirm('このレースと、紐づく馬・結果データも全て削除されます。よろしいですか？');">

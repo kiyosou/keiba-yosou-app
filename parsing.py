@@ -108,3 +108,68 @@ def parse_shutsuba_text(text: str) -> list[dict]:
         })
 
     return entries
+
+def parse_result_table(text: str) -> list[dict]:
+    lines = [l.rstrip("\r") for l in text.split("\n")]
+    entries = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        parts = line.split("\t")
+        # 「着順」の行は、先頭が数字で、かつ「枠」を含む2つ目の要素がある
+        if len(parts) >= 4 and parts[0].isdigit() and parts[1].startswith("枠"):
+            finish_position = int(parts[0])
+            umaban = parts[2].strip()
+            name = parts[3].strip()
+
+            # 名前の直後に注記(ブリンカー着用など)が別行で挟まることがあるのでスキップ
+            j = i + 1
+            while j < len(lines) and lines[j].strip() and not re.match(r"^(牡|牝|セ)\d+", lines[j].strip()):
+                j += 1
+
+            sex_age = lines[j].strip() if j < len(lines) else ""
+
+            # 残りの列(負担重量・騎手・タイム・着差)を探す
+            rest = lines[j+1:j+6]
+            rest = [r.strip() for r in rest if r.strip()]
+
+            time_value = ""
+            for r in rest:
+                if re.match(r"^\d:\d{2}\.\d$", r):
+                    time_value = r
+                    break
+
+            # コーナー通過順位(数字とスペースだけの行)を探す
+            corner_positions = ""
+            k = j
+            while k < len(lines) and k < j + 10:
+                l2 = lines[k].strip()
+                if re.match(r"^\d+(\s+\d+)+$", l2):
+                    corner_positions = l2
+                    break
+                k += 1
+
+            # 推定上り(小数点を含む数字だけの行)と、その次の馬体重を探す
+            final_3f = ""
+            weight = ""
+            for idx3 in range(k, min(k + 4, len(lines))):
+                l3 = lines[idx3].strip()
+                if re.match(r"^\d{2}\.\d$", l3) and not final_3f:
+                    final_3f = l3
+                elif re.match(r"^\d{3,4}\([+\-0]?\d*\)$", l3):
+                    weight = l3
+
+            entries.append({
+                "finish_position": finish_position,
+                "name": name,
+                "time": time_value,
+                "corner_positions": corner_positions,
+                "final_3f": final_3f,
+                "weight": weight,
+            })
+            i = k
+        else:
+            i += 1
+
+    entries.sort(key=lambda e: e["finish_position"])
+    return entries

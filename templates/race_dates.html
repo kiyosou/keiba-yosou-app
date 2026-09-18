@@ -47,7 +47,7 @@
 <ul class="race-list">
 {% for d in dates %}
     <li>
-        <a href="/races/{{ d.date }}">{{ d.date }}({{ d.count }}レース)</a>
+        <a href="/races/{{ d.date }}?venue={{ selected_venue }}&surface={{ selected_surface }}&min_distance={{ selected_min }}&max_distance={{ selected_max }}">{{ d.date }}({{ d.count }}レース)</a>
     </li>
 {% endfor %}
 </ul>

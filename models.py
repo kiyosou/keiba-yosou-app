@@ -45,3 +45,13 @@ class TrackBias(SQLModel, table=True):
     venue: str
     turf_bias: str = ""
     dirt_bias: str = ""
+
+class ActualResult(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    race_id: int = Field(foreign_key="race.id")
+    horse_name: str
+    finish_position: int
+    time: str = ""
+    corner_positions: str = ""
+    final_3f: str = ""
+    weight: str = ""

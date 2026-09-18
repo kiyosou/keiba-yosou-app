@@ -3,9 +3,10 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
 
 from database import engine
-from models import Race, RaceResult, Horse
+from models import Race, RaceResult, Horse, ActualResult
 from scoring import race_label, get_predicted_ranking
 from templates import templates
+from parsing import parse_result_table
 from routers.horses import get_all_horse_names
 
 router = APIRouter()
@@ -156,3 +157,20 @@ def results_list(
         "venues": venues, "distances": distances,
         "selected_venue": venue, "selected_min": min_distance, "selected_max": max_distance,
     })
+
+@router.get("/results/paste/{race_id}")
+def result_paste_page(request: Request, race_id: int):
+    return templates.TemplateResponse("result_paste.html", {
+        "request": request, "race_id": race_id, "entries": None, "raw_text": "",
+    })
+
+@router.post("/results/paste/{race_id}")
+def result_paste_parse(request: Request, race_id: int, raw_text: str = Form(...)):
+    entries = parse_result_table(raw_text)
+    return templates.TemplateResponse("result_paste.html", {
+        "request": request, "race_id": race_id, "entries": entries, "raw_text": raw_text,
+    })
+
+@router.post("/results/paste-confirm/{race_id}")
+def result_paste_confirm(race_id: int, request: Request):
+    return RedirectResponse(url=f"/results/paste/{race_id}", status_code=303)

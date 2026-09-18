@@ -51,7 +51,11 @@ def add_horse(
     return RedirectResponse(url="/", status_code=303)
 
 @router.get("/horses/ranking-page/{race_id}")
-def ranking_page(request: Request, race_id: int):
+def ranking_page(
+    request: Request, race_id: int,
+    back_date: str = "", venue: str = "", surface: str = "",
+    min_distance: str = "", max_distance: str = "",
+):
     with Session(engine) as session:
         race = session.get(Race, race_id)
         horses = session.exec(select(Horse).where(Horse.race_id == race_id)).all()
@@ -67,12 +71,25 @@ def ranking_page(request: Request, race_id: int):
             }
             for h in ranked
         ]
+
+    back_url = ""
+    if back_date:
+        params = []
+        if venue:
+            params.append(f"venue={venue}")
+        if surface:
+            params.append(f"surface={surface}")
+        if min_distance:
+            params.append(f"min_distance={min_distance}")
+        if max_distance:
+            params.append(f"max_distance={max_distance}")
+        back_url = f"/races/{back_date}" + ("?" + "&".join(params) if params else "")
+
     return templates.TemplateResponse("ranking.html", {
         "request": request, "horses": horse_list,
         "race_label": race_label(race) if race else "",
-        "race_id": race_id,
+        "race_id": race_id, "back_url": back_url,
     })
-
 @router.get("/horses/export/{race_id}")
 def export_horses(race_id: int):
     with Session(engine) as session:

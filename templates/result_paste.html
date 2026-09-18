@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}レース結果を貼り付けて登録{% endblock %}
+{% block content %}
+<h1>レース結果を貼り付けて登録</h1>
+<div class="card">
+    <p>JRA公式サイトのレース結果ページで、結果表(着順〜単勝人気の列)を選択してコピーし、下に貼り付けて「解析する」を押してください。</p>
+    <form action="/results/paste/{{ race_id }}" method="post">
+        <textarea name="raw_text" rows="10" style="width:100%; font-family:inherit; padding:0.6rem; border:1px solid var(--border); border-radius:4px;">{{ raw_text }}</textarea>
+        <br><br>
+        <button type="submit">解析する</button>
+    </form>
+</div>
+
+{% if entries is not none %}
+<h2>抽出結果({{ entries|length }}頭)</h2>
+{% if entries %}
+<div class="wide-table">
+<table>
+    <tr><th>着順</th><th>馬名</th><th>タイム</th><th>コーナー通過順位</th><th>推定上り</th><th>馬体重</th></tr>
+    {% for e in entries %}
+    <tr>
+        <td>{{ e.finish_position }}</td>
+        <td>{{ e.name }}</td>
+        <td>{{ e.time }}</td>
+        <td>{{ e.corner_positions }}</td>
+        <td>{{ e.final_3f }}</td>
+        <td>{{ e.weight }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% else %}
+<p class="empty-message">解析できませんでした。貼り付けたテキストの形式を確認してください。</p>
+{% endif %}
+{% endif %}
+{% endblock %}
