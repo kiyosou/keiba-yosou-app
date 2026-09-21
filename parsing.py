@@ -175,3 +175,16 @@ def parse_result_table(text: str) -> list[dict]:
 
     entries.sort(key=lambda e: e["finish_position"])
     return entries
+
+def time_str_to_seconds(time_str: str) -> float:
+    time_str = time_str.strip()
+    if not time_str:
+        return 0.0
+    parts = time_str.split(".")
+    if len(parts) == 3:
+        minutes, seconds, tenths = parts
+        return int(minutes) * 60 + int(seconds) + int(tenths) / 10
+    elif len(parts) == 2:
+        seconds, tenths = parts
+        return int(seconds) + int(tenths) / 10
+    return 0.0

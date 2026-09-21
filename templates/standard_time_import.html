@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}基準タイム取り込み{% endblock %}
+{% block content %}
+<h1>基準タイムの取り込み</h1>
+<div class="card">
+    <p>TARGETから出力した基準タイムのExcelファイル(競馬場ごと、シートが芝1200・ダ1800のような形式)をアップロードしてください。</p>
+    <form action="/standard-times/import" method="post" enctype="multipart/form-data" class="form-grid">
+        <label class="full">競馬場
+            <select name="venue" required>
+                {% for v in venues %}
+                <option value="{{ v }}">{{ v }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full">Excelファイル
+            <input type="file" name="file" accept=".xlsx" required>
+        </label>
+        <div class="full">
+            <button type="submit">取り込む</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

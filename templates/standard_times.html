@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}基準タイム一覧{% endblock %}
+{% block content %}
+<h1>基準タイム一覧</h1>
+{% if request.query_params.get('imported') %}
+<p class="empty-message">{{ request.query_params.get('imported') }}件取り込みました。</p>
+{% endif %}
+<p class="page-nav"><a href="/standard-times/import">別のファイルを取り込む</a></p>
+{% if times %}
+<div class="wide-table">
+<table>
+    <tr><th>競馬場</th><th>馬場</th><th>距離</th><th>年齢</th><th>クラス</th><th>レース数</th><th>1着タイム</th><th>1〜3着平均</th><th>PCI3</th></tr>
+    {% for t in times %}
+    <tr>
+        <td>{{ t.venue }}</td>
+        <td>{{ t.surface }}</td>
+        <td>{{ t.distance }}m</td>
+        <td>{{ t.age }}</td>
+        <td>{{ t.race_class }}</td>
+        <td>{{ t.race_count }}</td>
+        <td>{{ t.winner_time }}</td>
+        <td>{{ t.top3_avg_time }}</td>
+        <td>{{ t.pci3 }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% else %}
+<p class="empty-message">まだ基準タイムが取り込まれていません。</p>
+{% endif %}
+{% endblock %}

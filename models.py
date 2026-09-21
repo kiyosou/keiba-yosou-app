@@ -57,3 +57,18 @@ class ActualResult(SQLModel, table=True):
     corner_positions: str = ""
     final_3f: str = ""
     weight: str = ""
+
+class StandardTime(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    venue: str
+    surface: str
+    distance: int
+    age: str
+    race_class: str
+    race_count: int = 0
+    winner_time: str = ""
+    winner_time_seconds: float = 0.0
+    top3_avg_time: str = ""
+    top3_avg_seconds: float = 0.0
+    pci3: float = 0.0
+    ave_3f: float = 0.0
