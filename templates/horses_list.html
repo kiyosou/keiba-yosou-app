@@ -11,10 +11,13 @@
     <a href="/horses?style=追込">追込</a>
 </p>
 {% if horses %}
+<form action="/horses/compare" method="get">
+<div class="wide-table">
 <table>
-    <tr><th>馬名</th><th>レース</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th></tr>
+    <tr><th></th><th>馬名</th><th>レース</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th></tr>
     {% for h in horses %}
     <tr>
+        <td><input type="checkbox" name="names" value="{{ h.name }}"></td>
         <td><a href="/horses/profile/{{ h.name }}">{{ h.name }}</a></td>
         <td><a href="/horses/ranking-page/{{ h.race_id }}">{{ h.race_label }}</a></td>
         <td>{{ h.running_style }}</td>
@@ -24,6 +27,10 @@
     </tr>
     {% endfor %}
 </table>
+</div>
+<br>
+<button type="submit">選択した馬を比較する</button>
+</form>
 {% else %}
 <p class="empty-message">まだ馬データが登録されていません。</p>
 {% endif %}

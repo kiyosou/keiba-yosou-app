@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}馬の比較{% endblock %}
+{% block content %}
+<h1>馬の比較({{ horse_histories|length }}頭)</h1>
+<p class="page-nav"><a href="/horses">馬一覧に戻る</a></p>
+
+{% if horse_histories %}
+<div class="wide-table">
+<div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    {% for hh in horse_histories %}
+    <div class="card" style="min-width:280px;">
+        <h2>{{ hh.name }}</h2>
+        {% if hh.history %}
+        <table>
+            <tr><th>出走歴</th><th>レース</th><th>脚質</th><th>スコア</th></tr>
+            {% for h in hh.history %}
+            <tr>
+                <td>{{ "今走" if loop.index == 1 else (loop.index0 == 1 and "前走" or (loop.index0|string + "走前")) }}</td>
+                <td><a href="/horses/ranking-page/{{ h.race_id }}">{{ h.race_label }}</a></td>
+                <td>{{ h.running_style }}</td>
+                <td>{{ h.score }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="empty-message">データがありません。</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+</div>
+{% else %}
+<p class="empty-message">馬が選択されていません。</p>
+{% endif %}
+{% endblock %}

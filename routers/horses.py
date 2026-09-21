@@ -1,7 +1,7 @@
 import csv
 import io
 from openpyxl import load_workbook
-from fastapi import APIRouter, Request, Form, UploadFile, File
+from fastapi import APIRouter, Request, Form, UploadFile, File, Query
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session, select
 
@@ -315,4 +315,32 @@ def horses_list(request: Request, style: str = ""):
     horse_list.sort(key=lambda x: x["race_date"], reverse=True)
     return templates.TemplateResponse("horses_list.html", {
         "request": request, "horses": horse_list, "style": style,
+    })
+
+@router.get("/horses/compare")
+def horses_compare(request: Request, names: list[str] = Query(default=[])):
+    if len(names) > 18:
+        names = names[:18]
+
+    with Session(engine) as session:
+        horse_histories = []
+        for name in names:
+            horses = session.exec(select(Horse).where(Horse.name == name)).all()
+            history = []
+            for h in horses:
+                race = session.get(Race, h.race_id)
+                history.append({
+                    "race_id": h.race_id,
+                    "race_label": race_label(race) if race else "不明なレース",
+                    "race_date": race.date if race else "",
+                    "running_style": h.running_style,
+                    "memo_tag": h.memo_tag,
+                    "score": calculate_score(h),
+                    "odds": h.odds,
+                })
+            history.sort(key=lambda x: x["race_date"], reverse=True)
+            horse_histories.append({"name": name, "history": history})
+
+    return templates.TemplateResponse("horses_compare.html", {
+        "request": request, "horse_histories": horse_histories,
     })
