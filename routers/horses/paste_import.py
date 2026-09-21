@@ -1,0 +1,48 @@
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import RedirectResponse
+from sqlmodel import Session
+
+from database import engine
+from models import Horse
+from templates import templates
+from parsing import parse_shutsuba_text
+
+router = APIRouter()
+
+@router.get("/horses/paste-import/{race_id}")
+def paste_import_page(request: Request, race_id: int):
+    return templates.TemplateResponse("horse_paste_import.html", {
+        "request": request, "race_id": race_id, "entries": None, "raw_text": "",
+    })
+
+@router.post("/horses/paste-import/{race_id}")
+def paste_import_parse(request: Request, race_id: int, raw_text: str = Form(...)):
+    entries = parse_shutsuba_text(raw_text)
+    return templates.TemplateResponse("horse_paste_import.html", {
+        "request": request, "race_id": race_id, "entries": entries, "raw_text": raw_text,
+    })
+
+@router.post("/horses/bulk-add/{race_id}")
+async def bulk_add_horses(race_id: int, request: Request):
+    form = await request.form()
+    count = int(form.get("count", 0))
+
+    with Session(engine) as session:
+        for i in range(count):
+            name = form.get(f"name_{i}")
+            if not name:
+                continue
+            odds_raw = form.get(f"odds_{i}") or ""
+            horse = Horse(
+                race_id=race_id,
+                name=name,
+                running_style=form.get(f"running_style_{i}", ""),
+                memo_tag=form.get(f"memo_tag_{i}", ""),
+                past_performance_score=float(form.get(f"past_performance_score_{i}") or 0),
+                course_aptitude_score=float(form.get(f"course_aptitude_score_{i}") or 0),
+                pace_score=float(form.get(f"pace_score_{i}") or 0),
+                odds=float(odds_raw) if odds_raw else None,
+            )
+            session.add(horse)
+        session.commit()
+    return RedirectResponse(url=f"/horses/ranking-page/{race_id}", status_code=303)
