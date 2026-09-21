@@ -14,6 +14,12 @@
         <label class="full">馬名
             <input type="text" name="name" value="{{ horse.name }}" required>
         </label>
+        <label>枠
+            <input type="number" name="waku" min="1" max="8" value="{{ horse.waku }}">
+        </label>
+        <label>馬番
+            <input type="number" name="umaban" min="1" max="18" value="{{ horse.umaban }}">
+        </label>
         <label>脚質
             <select name="running_style">
                 <option value="" {% if not horse.running_style %}selected{% endif %}>未設定</option>

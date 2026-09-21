@@ -15,6 +15,8 @@ class Horse(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     race_id: int = Field(foreign_key="race.id")
     name: str
+    waku: int | None = None
+    umaban: int | None = None
     running_style: str = ""
     memo_tag: str = ""
     past_performance_score: float = 0.0

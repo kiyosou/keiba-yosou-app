@@ -12,7 +12,7 @@ def infer_running_style(position: int) -> str:
 
 def parse_shutsuba_text(text: str) -> list[dict]:
     lines = [l.rstrip("\r") for l in text.split("\n")]
-    waku_pattern = re.compile(r"^枠\d+[^\t]*\t(\d+)\t?$")
+    waku_pattern = re.compile(r"^枠(\d+)[^\t]*\t(\d+)\t?$")
     date_pattern = re.compile(r"^(\d{4}年\d{1,2}月\d{1,2}日)\t(.+)$")
     position_line_pattern = re.compile(r"^\d+(\t\d+)*$")
 
@@ -24,7 +24,8 @@ def parse_shutsuba_text(text: str) -> list[dict]:
         block = [l.strip() for l in lines[start:end]]
 
         m = waku_pattern.match(block[0])
-        horse_number = m.group(1)
+        waku = m.group(1)
+        horse_number = m.group(2)
 
         idx = 1
         name = None
@@ -97,6 +98,7 @@ def parse_shutsuba_text(text: str) -> list[dict]:
                     break
 
         entries.append({
+            "waku": waku,
             "horse_number": horse_number,
             "name": name,
             "odds": odds,

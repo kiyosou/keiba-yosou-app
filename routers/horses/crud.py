@@ -24,6 +24,8 @@ def horse_add_page(request: Request):
 def add_horse(
     race_id: int = Form(...),
     name: str = Form(...),
+    waku: int = Form(None),
+    umaban: int = Form(None),
     running_style: str = Form(""),
     memo_tag: str = Form(""),
     past_performance_score: float = Form(...),
@@ -33,6 +35,7 @@ def add_horse(
 ):
     horse = Horse(
         race_id=race_id, name=name,
+        waku=waku, umaban=umaban,
         running_style=running_style, memo_tag=memo_tag,
         past_performance_score=past_performance_score,
         course_aptitude_score=course_aptitude_score,
@@ -71,6 +74,8 @@ def horse_edit_submit(
     horse_id: int,
     race_id: int = Form(...),
     name: str = Form(...),
+    waku: int = Form(None),
+    umaban: int = Form(None),
     running_style: str = Form(""),
     memo_tag: str = Form(""),
     past_performance_score: float = Form(...),
@@ -83,6 +88,8 @@ def horse_edit_submit(
         if horse:
             horse.race_id = race_id
             horse.name = name
+            horse.waku = waku
+            horse.umaban = umaban
             horse.running_style = running_style
             horse.memo_tag = memo_tag
             horse.past_performance_score = past_performance_score

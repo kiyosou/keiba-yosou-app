@@ -33,9 +33,13 @@ async def bulk_add_horses(race_id: int, request: Request):
             if not name:
                 continue
             odds_raw = form.get(f"odds_{i}") or ""
+            waku_raw = form.get(f"waku_{i}") or ""
+            umaban_raw = form.get(f"umaban_{i}") or ""
             horse = Horse(
                 race_id=race_id,
                 name=name,
+                waku=int(waku_raw) if waku_raw else None,
+                umaban=int(umaban_raw) if umaban_raw else None,
                 running_style=form.get(f"running_style_{i}", ""),
                 memo_tag=form.get(f"memo_tag_{i}", ""),
                 past_performance_score=float(form.get(f"past_performance_score_{i}") or 0),

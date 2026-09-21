@@ -18,12 +18,17 @@
 <div class="import-table">
     <table>
     <tr>
-        <th>馬番</th><th>馬名</th><th>オッズ</th><th>脚質</th><th>メモ</th>
+        <th>枠</th><th>馬番</th><th>馬名</th><th>オッズ</th><th>脚質</th><th>メモ</th>
         <th>過去走</th><th>コース適性</th><th>展開</th>
     </tr>
     {% for e in entries %}
     <tr>
-        <td>{{ e.horse_number }}</td>
+        <td>{{ e.waku }}</td>
+       <td>
+            {{ e.horse_number }}
+            <input type="hidden" name="waku_{{ loop.index0 }}" value="{{ e.waku }}">
+            <input type="hidden" name="umaban_{{ loop.index0 }}" value="{{ e.horse_number }}">
+        </td>
         <td>
             {{ e.name }}
             <input type="hidden" name="name_{{ loop.index0 }}" value="{{ e.name }}">

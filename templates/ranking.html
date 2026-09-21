@@ -6,17 +6,19 @@
 <p class="page-nav"><a href="{{ back_url }}">この日のレース一覧に戻る</a></p>
 {% endif %}
 <table>
-    <tr><th>順位</th><th>馬名</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th><th></th></tr>
+    <tr><th>順位</th><th>枠</th><th>馬番</th><th>馬名</th><th>脚質</th><th>タグ</th><th>スコア</th><th>オッズ</th><th></th></tr>
     {% for horse in horses %}
     <tr class="{% if loop.index == 1 %}rank-1{% endif %}">
-        <td>{{ loop.index }}</td>
-        <td><a href="/horses/profile/{{ horse.name }}">{{ horse.name }}</a></td>
-        <td>{{ horse.running_style }}</td>
-        <td>{{ horse.memo_tag }}</td>
-        <td>{{ horse.score }}</td>
-        <td>{{ horse.odds }}</td>
-         <td>
-            <a href="/horses/{{ horse.id }}/edit">編集</a>
+    <td>{{ loop.index }}</td>
+    <td>{{ horse.waku }}</td>
+    <td>{{ horse.umaban }}</td>
+    <td><a href="/horses/profile/{{ horse.name }}">{{ horse.name }}</a></td>
+    <td>{{ horse.running_style }}</td>
+    <td>{{ horse.memo_tag }}</td>
+    <td>{{ horse.score }}</td>
+    <td>{{ horse.odds }}</td>
+    <td>
+        <a href="/horses/{{ horse.id }}/edit">編集</a>
         <form action="/horses/{{ horse.id }}/delete" method="post" style="margin:0;" onsubmit="return confirm('削除しますか？');">
             <button type="submit">削除</button>
         </form>

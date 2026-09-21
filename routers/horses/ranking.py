@@ -22,6 +22,8 @@ def ranking_page(
             {
                 "id": h.id,
                 "name": h.name,
+                "waku": h.waku,
+                "umaban": h.umaban,
                 "score": calculate_score(h),
                 "odds": h.odds,
                 "running_style": h.running_style,
