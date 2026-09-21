@@ -363,4 +363,5 @@ table th {
 .wide-table td.wrap-cell {
   white-space: normal;
   max-width: 260px;
+  min-width: 220px;
 }
