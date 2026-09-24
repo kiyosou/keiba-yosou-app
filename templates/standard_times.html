@@ -6,6 +6,30 @@
 <p class="empty-message">{{ request.query_params.get('imported') }}件取り込みました。</p>
 {% endif %}
 <p class="page-nav"><a href="/">ホームに戻る</a> | <a href="/standard-times/import">別のファイルを取り込む</a></p>
+<div class="card">
+    <form method="get" class="form-grid">
+        <label>競馬場
+            <select name="venue">
+                <option value="">すべて</option>
+                {% for v in venues %}
+                <option value="{{ v }}" {% if v == selected_venue %}selected{% endif %}>{{ v }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>距離
+            <select name="distance">
+                <option value="">すべて</option>
+                {% for d in distances %}
+                <option value="{{ d }}" {% if d|string == selected_distance %}selected{% endif %}>{{ d }}m</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="full">
+            <button type="submit">絞り込む</button>
+        </div>
+    </form>
+</div>
+
 {% if times %}
 <div class="wide-table">
 <table>
