@@ -48,3 +48,34 @@ def calculate_race_level(session, race, actual_time_str: str) -> dict:
         "actual_time": actual_time_str,
         "diff_seconds": round(diff, 2),
     }
+
+def calculate_auto_score_from_history(session, horse_name: str) -> dict:
+    from models import ActualResult, Race
+
+    results = session.exec(select(ActualResult).where(ActualResult.horse_name == horse_name)).all()
+
+    dated_results = []
+    for r in results:
+        race = session.get(Race, r.race_id)
+        if race:
+            dated_results.append((race.date, r, race))
+    dated_results.sort(key=lambda x: x[0], reverse=True)
+
+    recent = dated_results[:3]
+
+    diffs = []
+    for date, r, race in recent:
+        if not r.time:
+            continue
+        level = calculate_race_level(session, race, r.time)
+        if level["available"]:
+            diffs.append(level["diff_seconds"])
+
+    if not diffs:
+        return {"available": False, "score": 5.0, "sample_count": 0}
+
+    avg_diff = sum(diffs) / len(diffs)
+    score = 5.0 + avg_diff * 4.0
+    score = max(0.0, min(10.0, round(score, 1)))
+
+    return {"available": True, "score": score, "sample_count": len(diffs), "avg_diff": round(avg_diff, 2)}

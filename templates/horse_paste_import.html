@@ -48,7 +48,14 @@
             </select>
         </td>
         <td><input type="text" name="memo_tag_{{ loop.index0 }}" style="width:110px;" placeholder="{{ e.last_race_summary[:15] }}"></td>
-        <td><input type="number" step="0.5" name="past_performance_score_{{ loop.index0 }}" style="width:65px;" value="0"></td>
+        <td>
+            <input type="number" step="0.1" name="past_performance_score_{{ loop.index0 }}" style="width:65px;" value="{{ e.auto_score }}">
+            {% if e.auto_score_available %}
+            <br><small>({{ e.auto_score_samples }}走参考)</small>
+            {% else %}
+            <br><small>実績なし</small>
+            {% endif %}
+        </td>
         <td><input type="number" step="0.5" name="course_aptitude_score_{{ loop.index0 }}" style="width:65px;" value="0"></td>
         <td><input type="number" step="0.5" name="pace_score_{{ loop.index0 }}" style="width:65px;" value="0"></td>
     </tr>
