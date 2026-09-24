@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}結果登録完了{% endblock %}
+{% block content %}
+<h1>結果を登録しました</h1>
+
+{% if race_level %}
+<div class="card">
+    <h2>レースレベル指数</h2>
+    {% if race_level.available %}
+    <p>推定条件: {{ race_level.age }} {{ race_level.race_class }}</p>
+    <p>基準タイム: {{ race_level.standard_time }}</p>
+    <p>実際のタイム: {{ race_level.actual_time }}</p>
+    <p>
+        差: {{ race_level.diff_seconds }}秒
+        {% if race_level.diff_seconds > 0 %}(基準より速い、レベルが高いレース){% elif race_level.diff_seconds < 0 %}(基準より遅い、レベルが低いレース){% else %}(基準通り){% endif %}
+    </p>
+    {% else %}
+    <p class="empty-message">該当する基準タイムが見つかりませんでした(推定条件: {{ race_level.age }} {{ race_level.race_class }})。</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<p class="page-nav"><a href="/horses/ranking-page/{{ race_id }}">ランキングページに戻る</a></p>
+{% endblock %}

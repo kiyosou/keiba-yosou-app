@@ -29,6 +29,20 @@
     {% endfor %}
 </table>
 </div>
+
+<form action="/results/paste-confirm/{{ race_id }}" method="post">
+    {% for e in entries %}
+    <input type="hidden" name="name_{{ loop.index0 }}" value="{{ e.name }}">
+    <input type="hidden" name="finish_position_{{ loop.index0 }}" value="{{ e.finish_position }}">
+    <input type="hidden" name="time_{{ loop.index0 }}" value="{{ e.time }}">
+    <input type="hidden" name="corner_positions_{{ loop.index0 }}" value="{{ e.corner_positions }}">
+    <input type="hidden" name="final_3f_{{ loop.index0 }}" value="{{ e.final_3f }}">
+    <input type="hidden" name="weight_{{ loop.index0 }}" value="{{ e.weight }}">
+    {% endfor %}
+    <input type="hidden" name="count" value="{{ entries|length }}">
+    <button type="submit">この内容で確定登録する</button>
+</form>
+
 {% else %}
 <p class="empty-message">解析できませんでした。貼り付けたテキストの形式を確認してください。</p>
 {% endif %}

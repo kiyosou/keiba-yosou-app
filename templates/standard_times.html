@@ -5,7 +5,7 @@
 {% if request.query_params.get('imported') %}
 <p class="empty-message">{{ request.query_params.get('imported') }}件取り込みました。</p>
 {% endif %}
-<p class="page-nav"><a href="/standard-times/import">別のファイルを取り込む</a></p>
+<p class="page-nav"><a href="/">ホームに戻る</a> | <a href="/standard-times/import">別のファイルを取り込む</a></p>
 {% if times %}
 <div class="wide-table">
 <table>

@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 
 from database import engine
 from models import Race, RaceResult, Horse, ActualResult
-from scoring import race_label, get_predicted_ranking
+from scoring import race_label, get_predicted_ranking, calculate_race_level
 from templates import templates
 from parsing import parse_result_table
 from routers.horses import get_all_horse_names
@@ -172,5 +172,33 @@ def result_paste_parse(request: Request, race_id: int, raw_text: str = Form(...)
     })
 
 @router.post("/results/paste-confirm/{race_id}")
-def result_paste_confirm(race_id: int, request: Request):
-    return RedirectResponse(url=f"/results/paste/{race_id}", status_code=303)
+async def result_paste_confirm(race_id: int, request: Request):
+    form = await request.form()
+    count = int(form.get("count", 0))
+
+    with Session(engine) as session:
+        race = session.get(Race, race_id)
+        for i in range(count):
+            name = form.get(f"name_{i}")
+            if not name:
+                continue
+            actual = ActualResult(
+                race_id=race_id,
+                horse_name=name,
+                finish_position=int(form.get(f"finish_position_{i}") or 0),
+                time=form.get(f"time_{i}", ""),
+                corner_positions=form.get(f"corner_positions_{i}", ""),
+                final_3f=form.get(f"final_3f_{i}", ""),
+                weight=form.get(f"weight_{i}", ""),
+            )
+            session.add(actual)
+        session.commit()
+
+        race_level = None
+        winner_time = form.get("time_0", "")
+        if race and winner_time:
+            race_level = calculate_race_level(session, race, winner_time)
+
+    return templates.TemplateResponse("result_paste_done.html", {
+        "request": request, "race_id": race_id, "race_level": race_level,
+    })

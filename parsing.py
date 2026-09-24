@@ -188,3 +188,36 @@ def time_str_to_seconds(time_str: str) -> float:
         seconds, tenths = parts
         return int(seconds) + int(tenths) / 10
     return 0.0
+
+CLASS_NAME_MAP = {
+    "1勝クラス": "500万",
+    "2勝クラス": "1000万",
+    "3勝クラス": "1600万",
+    "オープン": "OPEN",
+    "OPEN": "OPEN",
+}
+
+def infer_age_and_class(race_name: str) -> tuple[str, str]:
+    # クラスの判定
+    race_class = "OPEN"  # 重賞・特別戦などはデフォルトでOPEN扱い
+    if "新馬" in race_name:
+        race_class = "新馬"
+    elif "未勝利" in race_name:
+        race_class = "未勝利"
+    else:
+        for new_name, old_name in CLASS_NAME_MAP.items():
+            if new_name in race_name:
+                race_class = old_name
+                break
+
+    # 年齢の判定
+    age = "古馬"
+    if "2歳" in race_name or "２歳" in race_name:
+        age = "２歳"
+    elif "3歳" in race_name or "３歳" in race_name:
+        if "以上" in race_name:
+            age = "古馬"  # 3歳以上は年齢混合なので、便宜上「古馬」の基準タイムを使う
+        else:
+            age = "３歳"
+
+    return age, race_class
