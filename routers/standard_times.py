@@ -20,86 +20,95 @@ VENUES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", 
 import_progress = {"total": 0, "done": 0, "finished": False, "imported_count": 0}
 
 def run_import(venue: str, content: bytes):
-    workbook = load_workbook(io.BytesIO(content), data_only=True)
+    try:
+        workbook = load_workbook(io.BytesIO(content), data_only=True)
 
-    # まず全体の行数を数える(進捗バーの分母にするため)
-    total_rows = 0
-    valid_sheets = []
-    for sheet_name in workbook.sheetnames:
-        if sheet_name.startswith("芝") or sheet_name.startswith("ダ"):
-            rest = sheet_name[1:]
-            if not re.match(r"^(\d+)(外|内)?$", rest):
-                continue
-            sheet = workbook[sheet_name]
-            valid_sheets.append(sheet_name)
-            total_rows += sum(1 for row in sheet.iter_rows(min_row=2, values_only=True) if row and row[0])
-
-    import_progress["total"] = total_rows
-    import_progress["done"] = 0
-    import_progress["finished"] = False
-    import_progress["imported_count"] = 0
-
-    imported_count = 0
-    with Session(engine) as session:
-        for sheet_name in valid_sheets:
-            sheet = workbook[sheet_name]
-            surface = "芝" if sheet_name.startswith("芝") else "ダート"
-            rest = sheet_name[1:]
-            m = re.match(r"^(\d+)(外|内)?$", rest)
-            if not m:
-                print(f"[基準タイム取り込み] シート名 '{sheet_name}' を認識できずスキップしました")
-                continue
-            distance = int(m.group(1))
-            course_type = m.group(2) or ""
-
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                if not row or not row[0]:
+        total_rows = 0
+        valid_sheets = []
+        for sheet_name in workbook.sheetnames:
+            if sheet_name.startswith("芝") or sheet_name.startswith("ダ"):
+                rest = sheet_name[1:]
+                if not re.match(r"^(\d+)(外|内)?$", rest):
                     continue
-                age, race_class = row[0], row[1]
-                age = unicodedata.normalize("NFKC", str(age)).strip() if age else age
-                race_class = unicodedata.normalize("NFKC", str(race_class)).strip() if race_class else race_class
-                if not age or not race_class:
-                    import_progress["done"] += 1
+                sheet = workbook[sheet_name]
+                valid_sheets.append(sheet_name)
+                total_rows += sum(1 for row in sheet.iter_rows(min_row=2, values_only=True) if row and row[0])
+
+        import_progress["total"] = total_rows
+        import_progress["done"] = 0
+        import_progress["finished"] = False
+        import_progress["imported_count"] = 0
+        import_progress["error"] = ""
+        print(f"[基準タイム取り込み] 開始: 全{total_rows}件")
+
+        new_records = []
+
+        with Session(engine) as session:
+            # 既存データを先にまとめて削除(1件ずつの確認をなくす)
+            existing_all = session.exec(
+                select(StandardTime).where(StandardTime.venue == venue)
+            ).all()
+            for ex in existing_all:
+                session.delete(ex)
+            session.commit()
+            print(f"[基準タイム取り込み] 既存{len(existing_all)}件を削除しました")
+
+            for sheet_name in valid_sheets:
+                sheet = workbook[sheet_name]
+                surface = "芝" if sheet_name.startswith("芝") else "ダート"
+                rest = sheet_name[1:]
+                m = re.match(r"^(\d+)(外|内)?$", rest)
+                if not m:
                     continue
+                distance = int(m.group(1))
+                course_type = m.group(2) or ""
 
-                race_count = row[2] or 0
-                winner_time = str(row[4]) if row[4] else ""
-                top3_avg_time = str(row[7]) if row[7] else ""
-                pci3 = row[10] or 0
-                ave_3f = row[11] or 0
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    if not row or not row[0]:
+                        continue
+                    age, race_class = row[0], row[1]
+                    age = unicodedata.normalize("NFKC", str(age)).strip() if age else age
+                    race_class = unicodedata.normalize("NFKC", str(race_class)).strip() if race_class else race_class
+                    if not age or not race_class:
+                        import_progress["done"] += 1
+                        continue
 
-                existing = session.exec(
-                    select(StandardTime).where(
-                        StandardTime.venue == venue,
-                        StandardTime.surface == surface,
-                        StandardTime.distance == distance,
-                        StandardTime.age == age,
-                        StandardTime.race_class == race_class,
+                    race_count = row[2] or 0
+                    winner_time = str(row[4]) if row[4] else ""
+                    top3_avg_time = str(row[7]) if row[7] else ""
+                    pci3 = row[10] or 0
+                    ave_3f = row[11] or 0
+
+                    st = StandardTime(
+                        venue=venue, surface=surface, distance=distance, course_type=course_type,
+                        age=age, race_class=race_class,
+                        race_count=int(race_count) if race_count else 0,
+                        winner_time=winner_time,
+                        winner_time_seconds=time_str_to_seconds(winner_time),
+                        top3_avg_time=top3_avg_time,
+                        top3_avg_seconds=time_str_to_seconds(top3_avg_time),
+                        pci3=float(pci3) if pci3 else 0.0,
+                        ave_3f=float(ave_3f) if ave_3f else 0.0,
                     )
-                ).first()
-                if existing:
-                    session.delete(existing)
-                    session.commit()
+                    new_records.append(st)
+                    import_progress["done"] += 1
+                    if import_progress["done"] % 20 == 0:
+                        print(f"[基準タイム取り込み] {import_progress['done']}/{total_rows}件 読み込み済み")
 
-                st = StandardTime(
-                    venue=venue, surface=surface, distance=distance, course_type=course_type,
-                    age=age, race_class=race_class,
-                    race_count=int(race_count) if race_count else 0,
-                    winner_time=winner_time,
-                    winner_time_seconds=time_str_to_seconds(winner_time),
-                    top3_avg_time=top3_avg_time,
-                    top3_avg_seconds=time_str_to_seconds(top3_avg_time),
-                    pci3=float(pci3) if pci3 else 0.0,
-                    ave_3f=float(ave_3f) if ave_3f else 0.0,
-                )
-                session.add(st)
-                imported_count += 1
-                import_progress["done"] += 1
-        session.commit()
+            # ここでまとめて1回の通信で保存する
+            print(f"[基準タイム取り込み] {len(new_records)}件をまとめて保存しています...")
+            session.bulk_save_objects(new_records)
+            session.commit()
 
-    import_progress["imported_count"] = imported_count
-    import_progress["finished"] = True
+        import_progress["imported_count"] = len(new_records)
+        import_progress["finished"] = True
+        print(f"[基準タイム取り込み] 完了: {len(new_records)}件")
 
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        import_progress["error"] = str(e)
+        import_progress["finished"] = True
 @router.get("/standard-times/import")
 def standard_time_import_page(request: Request):
     return templates.TemplateResponse("standard_time_import.html", {
