@@ -64,7 +64,7 @@ class StandardTime(SQLModel, table=True):
     venue: str
     surface: str
     distance: int
-    course_type: str = ""  # 外・内など(指定なしの場合は空文字)
+    course_type: str = ""
     age: str
     race_class: str
     race_count: int = 0
@@ -72,5 +72,6 @@ class StandardTime(SQLModel, table=True):
     winner_time_seconds: float = 0.0
     top3_avg_time: str = ""
     top3_avg_seconds: float = 0.0
+    rpci: float = 0.0
     pci3: float = 0.0
     ave_3f: float = 0.0

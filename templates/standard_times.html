@@ -33,7 +33,7 @@
 {% if times %}
 <div class="wide-table">
 <table>
-    <tr><th>競馬場</th><th>馬場</th><th>距離</th><th>コース</th><th>年齢</th><th>クラス</th><th>レース数</th><th>1着タイム</th><th>1〜3着平均</th><th>PCI3</th></tr>
+    <tr><th>競馬場</th><th>馬場</th><th>距離</th><th>コース</th><th>年齢</th><th>クラス</th><th>レース数</th><th>1着タイム</th><th>1〜3着平均</th><th>RPCI</th><th>PCI3</th></tr>
     {% for t in times %}
     <tr>
     <td>{{ t.venue }}</td>
@@ -45,6 +45,7 @@
     <td>{{ t.race_count }}</td>
     <td>{{ t.winner_time }}</td>
     <td>{{ t.top3_avg_time }}</td>
+    <td>{{ t.rpci }}</td>
     <td>{{ t.pci3 }}</td>
 </tr>
     {% endfor %}
