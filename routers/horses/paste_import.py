@@ -1,6 +1,7 @@
 from sqlmodel import Session
 from database import engine
-from scoring import calculate_auto_score_from_history
+from parsing import parse_shutsuba_text, age_category_from_sex_age
+from scoring import calculate_score_from_past_races
 
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
@@ -25,7 +26,8 @@ def paste_import_parse(request: Request, race_id: int, raw_text: str = Form(...)
 
     with Session(engine) as session:
         for e in entries:
-            auto = calculate_auto_score_from_history(session, e["name"])
+            age_category = age_category_from_sex_age(e.get("sex_age", ""))
+            auto = calculate_score_from_past_races(session, e.get("past_races", []), age_category)
             e["auto_score"] = auto["score"]
             e["auto_score_available"] = auto["available"]
             e["auto_score_samples"] = auto["sample_count"]

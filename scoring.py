@@ -18,7 +18,7 @@ def get_predicted_ranking(race_id: int, session: Session) -> list[str]:
     return [h.name for h in ranked]
 
 from models import StandardTime
-from parsing import infer_age_and_class, time_str_to_seconds
+from parsing import infer_age_and_class, time_str_to_seconds, infer_class
 
 def calculate_race_level(session, race, actual_time_str: str) -> dict:
     age, race_class = infer_age_and_class(race.race_name)
@@ -80,3 +80,26 @@ def calculate_auto_score_from_history(session, horse_name: str) -> dict:
     score = max(0.0, min(10.0, round(score, 1)))
 
     return {"available": True, "score": score, "sample_count": len(diffs), "avg_diff": round(avg_diff, 2)}
+
+def calculate_score_from_past_races(session, past_races: list[dict], age_category: str) -> dict:
+    diffs = []
+    for pr in past_races:
+        race_class = infer_class(pr["race_class_text"])
+        standard = session.exec(
+            select(StandardTime).where(
+                StandardTime.venue == pr["venue"],
+                StandardTime.surface == pr["surface"],
+                StandardTime.distance == pr["distance"],
+                StandardTime.age == age_category,
+                StandardTime.race_class == race_class,
+            )
+        ).first()
+        if standard and standard.winner_time_seconds:
+            diffs.append(standard.winner_time_seconds - pr["time_seconds"])
+
+    if not diffs:
+        return {"available": False, "score": 5.0, "sample_count": 0}
+
+    avg_diff = sum(diffs) / len(diffs)
+    score = max(0.0, min(10.0, round(5.0 + avg_diff * 4.0, 1)))
+    return {"available": True, "score": score, "sample_count": len(diffs)}

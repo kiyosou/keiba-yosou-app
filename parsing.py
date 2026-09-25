@@ -80,22 +80,54 @@ def parse_shutsuba_text(text: str) -> list[dict]:
 
         last_race_summary = ""
         suggested_running_style = "不明"
+        past_races = []
+        distance_surface_pattern = re.compile(r"^(\d+)(芝|ダ)$")
+        colon_time_pattern = re.compile(r"^(\d+):(\d{2})\.(\d)$")
+
         date_positions = [i for i, l in enumerate(block) if date_pattern.match(l)]
-        if date_positions:
-            first_date_idx = date_positions[0]
-            second_date_idx = date_positions[1] if len(date_positions) > 1 else len(block)
-            section = block[first_date_idx:second_date_idx]
+        for k2, pos in enumerate(date_positions[:3]):
+            end_pos = date_positions[k2 + 1] if k2 + 1 < len(date_positions) else len(block)
+            section = block[pos:end_pos]
 
-            summary_lines = [l for l in section if l]
-            last_race_summary = " / ".join(summary_lines[:6])
+            md = date_pattern.match(section[0])
+            race_date, venue = md.group(1), md.group(2)
 
-            for i4, l in enumerate(section):
-                if l.startswith("3F") and i4 > 0:
-                    prev_line = section[i4 - 1]
-                    if position_line_pattern.match(prev_line):
-                        positions = [int(p) for p in prev_line.split("\t")]
-                        suggested_running_style = infer_running_style(positions[-1])
+            race_class_text = ""
+            for l in section[1:]:
+                if l:
+                    race_class_text = l
                     break
+
+            distance = None
+            surface = None
+            time_seconds = None
+            for l in section:
+                dm = distance_surface_pattern.match(l)
+                if dm:
+                    distance = int(dm.group(1))
+                    surface_raw = dm.group(2)
+                    surface = "ダート" if surface_raw == "ダ" else "芝"
+                tm = colon_time_pattern.match(l)
+                if tm and time_seconds is None:
+                    time_seconds = int(tm.group(1)) * 60 + int(tm.group(2)) + int(tm.group(3)) / 10
+
+            if k2 == 0:
+                summary_lines = [l for l in section if l]
+                last_race_summary = " / ".join(summary_lines[:6])
+                for i4, l in enumerate(section):
+                    if l.startswith("3F") and i4 > 0:
+                        prev_line = section[i4 - 1]
+                        if position_line_pattern.match(prev_line):
+                            positions = [int(p) for p in prev_line.split("\t")]
+                            suggested_running_style = infer_running_style(positions[-1])
+                        break
+
+            if distance and surface and time_seconds:
+                past_races.append({
+                    "date": race_date, "venue": venue, "distance": distance,
+                    "surface": surface, "race_class_text": race_class_text,
+                    "time_seconds": time_seconds,
+                })
 
         entries.append({
             "waku": waku,
@@ -107,6 +139,7 @@ def parse_shutsuba_text(text: str) -> list[dict]:
             "jockey": jockey,
             "last_race_summary": last_race_summary,
             "suggested_running_style": suggested_running_style,
+            "past_races": past_races,
         })
 
     return entries
@@ -182,11 +215,13 @@ def time_str_to_seconds(time_str: str) -> float:
         return 0.0
     parts = time_str.split(".")
     if len(parts) == 3:
-        minutes, seconds, tenths = parts
-        return int(minutes) * 60 + int(seconds) + int(tenths) / 10
+        minutes, seconds, frac = parts
+        frac_value = int(frac) / (10 ** len(frac))
+        return int(minutes) * 60 + int(seconds) + frac_value
     elif len(parts) == 2:
-        seconds, tenths = parts
-        return int(seconds) + int(tenths) / 10
+        seconds, frac = parts
+        frac_value = int(frac) / (10 ** len(frac))
+        return int(seconds) + frac_value
     return 0.0
 
 CLASS_NAME_MAP = {
@@ -197,27 +232,32 @@ CLASS_NAME_MAP = {
     "OPEN": "OPEN",
 }
 
-def infer_age_and_class(race_name: str) -> tuple[str, str]:
-    # クラスの判定
-    race_class = "OPEN"  # 重賞・特別戦などはデフォルトでOPEN扱い
-    if "新馬" in race_name:
-        race_class = "新馬"
-    elif "未勝利" in race_name:
-        race_class = "未勝利"
-    else:
-        for new_name, old_name in CLASS_NAME_MAP.items():
-            if new_name in race_name:
-                race_class = old_name
-                break
+def infer_class(text: str) -> str:
+    if "新馬" in text:
+        return "新馬"
+    if "未勝利" in text:
+        return "未勝利"
+    for new_name, old_name in CLASS_NAME_MAP.items():
+        if new_name in text:
+            return old_name
+    return "OPEN"
 
-    # 年齢の判定
+def infer_age_and_class(race_name: str) -> tuple[str, str]:
+    race_class = infer_class(race_name)
     age = "古馬"
     if "2歳" in race_name or "２歳" in race_name:
-        age = "２歳"
+        age = "2歳"
     elif "3歳" in race_name or "３歳" in race_name:
-        if "以上" in race_name:
-            age = "古馬"  # 3歳以上は年齢混合なので、便宜上「古馬」の基準タイムを使う
-        else:
-            age = "３歳"
-
+        age = "古馬" if "以上" in race_name else "3歳"
     return age, race_class
+
+def age_category_from_sex_age(sex_age: str) -> str:
+    m = re.search(r"(\d+)", sex_age or "")
+    if not m:
+        return "古馬"
+    age = int(m.group(1))
+    if age == 2:
+        return "2歳"
+    elif age == 3:
+        return "3歳"
+    return "古馬"
