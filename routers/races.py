@@ -21,12 +21,13 @@ def add_race(
     race_number: int = Form(...),
     surface: str = Form(...),
     distance: int = Form(...),
+    course_type: str = Form(""),
     weather: str = Form(...),
     track_condition: str = Form(...),
 ):
     race = Race(
         race_name=race_name, date=date, venue=venue, race_number=race_number,
-        surface=surface, distance=distance,
+        surface=surface, distance=distance, course_type=course_type,
         weather=weather, track_condition=track_condition,
     )
     with Session(engine) as session:

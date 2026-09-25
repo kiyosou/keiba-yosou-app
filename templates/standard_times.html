@@ -33,19 +33,20 @@
 {% if times %}
 <div class="wide-table">
 <table>
-    <tr><th>競馬場</th><th>馬場</th><th>距離</th><th>年齢</th><th>クラス</th><th>レース数</th><th>1着タイム</th><th>1〜3着平均</th><th>PCI3</th></tr>
+    <tr><th>競馬場</th><th>馬場</th><th>距離</th><th>コース</th><th>年齢</th><th>クラス</th><th>レース数</th><th>1着タイム</th><th>1〜3着平均</th><th>PCI3</th></tr>
     {% for t in times %}
     <tr>
-        <td>{{ t.venue }}</td>
-        <td>{{ t.surface }}</td>
-        <td>{{ t.distance }}m</td>
-        <td>{{ t.age }}</td>
-        <td>{{ t.race_class }}</td>
-        <td>{{ t.race_count }}</td>
-        <td>{{ t.winner_time }}</td>
-        <td>{{ t.top3_avg_time }}</td>
-        <td>{{ t.pci3 }}</td>
-    </tr>
+    <td>{{ t.venue }}</td>
+    <td>{{ t.surface }}</td>
+    <td>{{ t.distance }}m</td>
+    <td>{{ t.course_type if t.course_type else "-" }}</td>
+    <td>{{ t.age }}</td>
+    <td>{{ t.race_class }}</td>
+    <td>{{ t.race_count }}</td>
+    <td>{{ t.winner_time }}</td>
+    <td>{{ t.top3_avg_time }}</td>
+    <td>{{ t.pci3 }}</td>
+</tr>
     {% endfor %}
 </table>
 </div>

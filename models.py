@@ -7,6 +7,7 @@ class Race(SQLModel, table=True):
     venue: str
     race_number: int
     surface: str
+    course_type: str = ""  # 外・内など(該当しない競馬場は空文字のまま)
     distance: int
     weather: str
     track_condition: str
@@ -63,6 +64,7 @@ class StandardTime(SQLModel, table=True):
     venue: str
     surface: str
     distance: int
+    course_type: str = ""  # 外・内など(指定なしの場合は空文字)
     age: str
     race_class: str
     race_count: int = 0

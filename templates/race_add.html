@@ -44,6 +44,13 @@
                 {% endfor %}
             </select>
         </label>
+        <label>コース(外回り・内回りがある場合のみ)
+            <select name="course_type">
+                <option value="">指定なし</option>
+                <option value="外">外回り</option>
+                <option value="内">内回り</option>
+            </select>
+        </label>
         <label>天気
             <select name="weather" required>
                 <option value="晴れ">晴れ</option>

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}取り込み中{% endblock %}
+{% block content %}
+<h1>基準タイムを取り込んでいます</h1>
+<div class="card">
+    <p id="status-text">準備中...</p>
+    <progress id="progress-bar" value="0" max="100" style="width:100%; height:1.5rem;"></progress>
+    <p id="result-text"></p>
+</div>
+
+<script>
+async function checkProgress() {
+    const res = await fetch('/standard-times/import/status');
+    const data = await res.json();
+
+    const bar = document.getElementById('progress-bar');
+    const statusText = document.getElementById('status-text');
+    const resultText = document.getElementById('result-text');
+
+    if (data.total > 0) {
+        const percent = Math.round((data.done / data.total) * 100);
+        bar.value = percent;
+        statusText.textContent = `${data.done} / ${data.total} 件処理中 (${percent}%)`;
+    } else {
+        statusText.textContent = "準備中...";
+    }
+
+    if (data.finished) {
+        resultText.textContent = `完了しました。${data.imported_count}件取り込みました。`;
+        setTimeout(() => {
+            window.location.href = `/standard-times`;
+        }, 1500);
+    } else {
+        setTimeout(checkProgress, 500);
+    }
+}
+checkProgress();
+</script>
+{% endblock %}

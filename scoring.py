@@ -27,6 +27,7 @@ def calculate_race_level(session, race, actual_time_str: str) -> dict:
             StandardTime.venue == race.venue,
             StandardTime.surface == race.surface,
             StandardTime.distance == race.distance,
+            StandardTime.course_type == (race.course_type or ""),
             StandardTime.age == age,
             StandardTime.race_class == race_class,
         )

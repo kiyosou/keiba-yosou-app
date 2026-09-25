@@ -1,4 +1,6 @@
 import io
+import re
+import unicodedata
 import threading
 from fastapi import APIRouter, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
@@ -25,6 +27,9 @@ def run_import(venue: str, content: bytes):
     valid_sheets = []
     for sheet_name in workbook.sheetnames:
         if sheet_name.startswith("芝") or sheet_name.startswith("ダ"):
+            rest = sheet_name[1:]
+            if not re.match(r"^(\d+)(外|内)?$", rest):
+                continue
             sheet = workbook[sheet_name]
             valid_sheets.append(sheet_name)
             total_rows += sum(1 for row in sheet.iter_rows(min_row=2, values_only=True) if row and row[0])
@@ -39,15 +44,20 @@ def run_import(venue: str, content: bytes):
         for sheet_name in valid_sheets:
             sheet = workbook[sheet_name]
             surface = "芝" if sheet_name.startswith("芝") else "ダート"
-            distance_str = sheet_name[1:]
-            if not distance_str.isdigit():
+            rest = sheet_name[1:]
+            m = re.match(r"^(\d+)(外|内)?$", rest)
+            if not m:
+                print(f"[基準タイム取り込み] シート名 '{sheet_name}' を認識できずスキップしました")
                 continue
-            distance = int(distance_str)
+            distance = int(m.group(1))
+            course_type = m.group(2) or ""
 
             for row in sheet.iter_rows(min_row=2, values_only=True):
                 if not row or not row[0]:
                     continue
                 age, race_class = row[0], row[1]
+                age = unicodedata.normalize("NFKC", str(age)).strip() if age else age
+                race_class = unicodedata.normalize("NFKC", str(race_class)).strip() if race_class else race_class
                 if not age or not race_class:
                     import_progress["done"] += 1
                     continue
@@ -72,7 +82,7 @@ def run_import(venue: str, content: bytes):
                     session.commit()
 
                 st = StandardTime(
-                    venue=venue, surface=surface, distance=distance,
+                    venue=venue, surface=surface, distance=distance, course_type=course_type,
                     age=age, race_class=race_class,
                     race_count=int(race_count) if race_count else 0,
                     winner_time=winner_time,
@@ -111,6 +121,16 @@ def import_progress_page(request: Request):
 def import_status():
     return import_progress
 
+AGE_ORDER = ["2歳", "3歳", "古馬", "全"]
+CLASS_ORDER = ["新馬", "未勝利", "500万", "1000万", "1600万", "OPEN", "平均等"]
+
+def sort_key(t):
+    age = unicodedata.normalize("NFKC", t.age or "").strip()
+    race_class = unicodedata.normalize("NFKC", t.race_class or "").strip()
+    age_index = AGE_ORDER.index(age) if age in AGE_ORDER else len(AGE_ORDER)
+    class_index = CLASS_ORDER.index(race_class) if race_class in CLASS_ORDER else len(CLASS_ORDER)
+    return (t.venue, t.surface, t.distance, t.course_type, age_index, class_index)
+
 @router.get("/standard-times")
 def standard_times_list(request: Request, venue: str = "", distance: str = ""):
     with Session(engine) as session:
@@ -125,7 +145,7 @@ def standard_times_list(request: Request, venue: str = "", distance: str = ""):
     if distance:
         filtered = [t for t in filtered if t.distance == int(distance)]
 
-    times_sorted = sorted(filtered, key=lambda t: (t.venue, t.surface, t.distance, t.age, t.race_class))
+    times_sorted = sorted(filtered, key=sort_key)
 
     return templates.TemplateResponse("standard_times.html", {
         "request": request, "times": times_sorted,

@@ -37,6 +37,13 @@
                 {% endfor %}
             </select>
         </label>
+        <label>コース(外回り・内回りがある場合のみ)
+            <select name="course_type">
+                <option value="" {% if not race.course_type %}selected{% endif %}>指定なし</option>
+                <option value="外" {% if race.course_type == "外" %}selected{% endif %}>外回り</option>
+                <option value="内" {% if race.course_type == "内" %}selected{% endif %}>内回り</option>
+            </select>
+        </label>
         <label>天気
             <select name="weather" required>
                 {% for w in ["晴れ","曇り","小雨","雨"] %}
