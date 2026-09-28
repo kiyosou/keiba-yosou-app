@@ -3,8 +3,8 @@ from fastapi.staticfiles import StaticFiles
 
 from database import create_db_and_tables
 from templates import templates
-from routers import races, horses, results, favorites, dev, standard_times
-
+from routers import races, horses, results, favorites, dev, standard_times, analysis
+app.include_router(analysis.router)
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

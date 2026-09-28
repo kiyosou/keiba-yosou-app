@@ -11,6 +11,7 @@ class Race(SQLModel, table=True):
     distance: int
     weather: str
     track_condition: str
+    lap_times: str = ""
 
 class Horse(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -75,3 +76,5 @@ class StandardTime(SQLModel, table=True):
     rpci: float = 0.0
     pci3: float = 0.0
     ave_3f: float = 0.0
+    all_avg_seconds: float = 0.0
+    lap_avg: str = ""

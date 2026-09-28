@@ -1,3 +1,4 @@
+from race_presets import RACE_NAME_PRESETS
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
@@ -11,7 +12,9 @@ router = APIRouter()
 
 @router.get("/races/add")
 def race_add_page(request: Request):
-    return templates.TemplateResponse("race_add.html", {"request": request})
+    return templates.TemplateResponse("race_add.html", {
+        "request": request, "race_name_presets": RACE_NAME_PRESETS,
+    })
 
 @router.post("/races/add")
 def add_race(
@@ -135,7 +138,9 @@ def delete_race(race_id: int):
 def race_edit_page(request: Request, race_id: int):
     with Session(engine) as session:
         race = session.get(Race, race_id)
-    return templates.TemplateResponse("race_edit.html", {"request": request, "race": race})
+    return templates.TemplateResponse("race_edit.html", {
+        "request": request, "race": race, "race_name_presets": RACE_NAME_PRESETS,
+    })
 
 @router.post("/races/{race_id}/edit")
 def race_edit_submit(

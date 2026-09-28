@@ -5,7 +5,12 @@
 <div class="card">
     <form action="/races/add" method="post" class="form-grid">
         <label class="full">レース名
-            <input type="text" name="race_name" placeholder="例: 3歳未勝利、天皇賞(秋)" required>
+            <input type="text" name="race_name" list="race-name-list" placeholder="選択、または自由に入力" required>
+            <datalist id="race-name-list">
+                {% for n in race_name_presets %}
+                <option value="{{ n }}">
+                {% endfor %}
+            </datalist>
         </label>
         <label class="full">日付
             <input type="date" name="date" required>

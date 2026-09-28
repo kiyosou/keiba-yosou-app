@@ -83,6 +83,8 @@ def run_import(venue: str, content: bytes):
                 idx_rpci = find_header_index(header_row, "RPCI")
                 idx_pci3 = find_header_index(header_row, "PCI3")
                 idx_ave3f = find_header_index(header_row, "Ave-3F")
+                idx_all_avg = find_header_index(header_row, "全馬平均")
+                idx_lap_avg = find_header_index(header_row, "ラップタイム平均")
 
                 if None in (idx_race_count, idx_winner_time, idx_pci3):
                     print(f"[基準タイム取り込み] シート'{sheet_name}'で必要な見出しが見つからずスキップしました")
@@ -104,6 +106,8 @@ def run_import(venue: str, content: bytes):
                     rpci = row[idx_rpci] if idx_rpci is not None else 0
                     pci3 = row[idx_pci3] or 0
                     ave_3f = row[idx_ave3f] if idx_ave3f is not None else 0
+                    all_avg_time = str(row[idx_all_avg]) if idx_all_avg is not None and row[idx_all_avg] else ""
+                    lap_avg = str(row[idx_lap_avg]) if idx_lap_avg is not None and row[idx_lap_avg] else ""
 
                     st = StandardTime(
                         venue=venue, surface=surface, distance=distance, course_type=course_type,
@@ -116,6 +120,8 @@ def run_import(venue: str, content: bytes):
                         rpci=float(rpci) if rpci else 0.0,
                         pci3=float(pci3) if pci3 else 0.0,
                         ave_3f=float(ave_3f) if ave_3f else 0.0,
+                        all_avg_seconds=time_str_to_seconds(all_avg_time),
+                        lap_avg=lap_avg,
                     )
                     new_records.append(st)
                     import_progress["done"] += 1

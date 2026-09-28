@@ -210,18 +210,20 @@ def parse_result_table(text: str) -> list[dict]:
     return entries
 
 def time_str_to_seconds(time_str: str) -> float:
-    time_str = time_str.strip()
+    time_str = (time_str or "").strip().replace("：", ":")
     if not time_str:
         return 0.0
+    m = re.fullmatch(r"(\d+):(\d{1,2})(?:\.(\d+))?", time_str)
+    if m:
+        frac = int(m.group(3)) / 10 ** len(m.group(3)) if m.group(3) else 0.0
+        return int(m.group(1)) * 60 + int(m.group(2)) + frac
     parts = time_str.split(".")
     if len(parts) == 3:
         minutes, seconds, frac = parts
-        frac_value = int(frac) / (10 ** len(frac))
-        return int(minutes) * 60 + int(seconds) + frac_value
+        return int(minutes) * 60 + int(seconds) + int(frac) / (10 ** len(frac))
     elif len(parts) == 2:
         seconds, frac = parts
-        frac_value = int(frac) / (10 ** len(frac))
-        return int(seconds) + frac_value
+        return int(seconds) + int(frac) / (10 ** len(frac))
     return 0.0
 
 CLASS_NAME_MAP = {
