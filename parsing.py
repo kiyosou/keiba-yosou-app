@@ -57,7 +57,7 @@ def parse_shutsuba_text(text: str) -> list[dict]:
 
         sex_age = None
         for l in block:
-            if re.match(r"^(牡|牝|セ)\d+/", l):
+            if re.match(r"^(牡|牝|セ|せん)\d+/", l):
                 sex_age = l
                 break
 
@@ -144,79 +144,95 @@ def parse_shutsuba_text(text: str) -> list[dict]:
 
     return entries
 
+# JRAの結果ページの表をコピーすると、1頭ぶんが次の3行になる:
+#   着順 <TAB> 枠 <TAB> 馬番 <TAB> 馬名 <TAB> 性齢 <TAB> 斤量 <TAB> 騎手 <TAB> タイム <TAB> 着差
+#   コーナー通過順位(例: 15 13 2 2)
+#   上がり3F <TAB> 馬体重(増減) <TAB> 調教師 <TAB> 人気
+# 「ブリンカー着用」などの注記がある馬は、馬名が次の行、性齢以降がその次の行に分かれる。
+_EQUIP_SUFFIX = re.compile(r"(ブリンカー|シャドーロール|チークピーシーズ|パシファイヤー)着用$")
+_RESULT_TIME = re.compile(r"^\d+:\d{2}\.\d$")
+_CORNER_LINE = re.compile(r"^\d+(?: \d+)*$")
+_AGARI = re.compile(r"^\d{2}\.\d$")
+
+
+def _result_head(line: str):
+    """「着順 枠 馬番 …」で始まる行なら、タブで分けたリストを返す。違えば None。"""
+    parts = line.rstrip("\r\n").split("\t")
+    if (len(parts) >= 3 and parts[0].strip().isdigit()
+            and parts[1].strip().startswith("枠") and parts[2].strip().isdigit()):
+        return parts
+    return None
+
+
 def parse_result_table(text: str) -> list[dict]:
-    lines = [l.rstrip("\r") for l in text.split("\n")]
+    lines = text.split("\n")
     entries = []
     i = 0
     while i < len(lines):
-        line = lines[i].strip()
-        parts = line.split("\t")
-        # 「着順」の行は、先頭が数字で、かつ「枠」を含む2つ目の要素がある
-        if len(parts) >= 4 and parts[0].isdigit() and parts[1].startswith("枠"):
-            finish_position = int(parts[0])
-            umaban = parts[2].strip()
-            name = parts[3].strip()
-
-            # 名前の直後に注記(ブリンカー着用など)が別行で挟まることがあるのでスキップ
-            j = i + 1
-            while j < len(lines) and lines[j].strip() and not re.match(r"^(牡|牝|セ)\d+", lines[j].strip()):
-                j += 1
-
-            sex_age = lines[j].strip() if j < len(lines) else ""
-
-            # 残りの列(負担重量・騎手・タイム・着差)を探す
-            rest = lines[j+1:j+6]
-            rest = [r.strip() for r in rest if r.strip()]
-
-            time_value = ""
-            for r in rest:
-                if re.match(r"^\d:\d{2}\.\d$", r):
-                    time_value = r
-                    break
-
-            # コーナー通過順位(数字とスペースだけの行)を探す
-            corner_positions = ""
-            k = j
-            while k < len(lines) and k < j + 10:
-                l2 = lines[k].strip()
-                if re.match(r"^\d+(\s+\d+)+$", l2):
-                    corner_positions = l2
-                    break
-                k += 1
-
-            # 推定上り(小数点を含む数字だけの行)と、その次の馬体重を探す
-            final_3f = ""
-            weight = ""
-            for idx3 in range(k, min(k + 4, len(lines))):
-                l3 = lines[idx3].strip()
-                if re.match(r"^\d{2}\.\d$", l3) and not final_3f:
-                    final_3f = l3
-                elif re.match(r"^\d{3,4}\([+\-0]?\d*\)$", l3):
-                    weight = l3
-
-            entries.append({
-                "finish_position": finish_position,
-                "name": name,
-                "time": time_value,
-                "corner_positions": corner_positions,
-                "final_3f": final_3f,
-                "weight": weight,
-            })
-            i = k
-        else:
+        parts = _result_head(lines[i])
+        if parts is None:
             i += 1
+            continue
+
+        finish_position = int(parts[0].strip())
+        i += 1
+        if len(parts) > 3 and parts[3].strip():
+            name = parts[3].strip()
+            detail = parts[4:]
+        else:
+            while i < len(lines) and not lines[i].strip():
+                i += 1
+            name = _EQUIP_SUFFIX.sub("", lines[i].strip()) if i < len(lines) else ""
+            i += 1
+            detail = lines[i].rstrip("\r\n").split("\t") if i < len(lines) else []
+            i += 1
+
+        # detail = [性齢, 斤量, 騎手, タイム, 着差, ...]
+        time_value = ""
+        if len(detail) > 3 and _RESULT_TIME.match(detail[3].strip()):
+            time_value = detail[3].strip()
+
+        corner_positions = ""
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+        if i < len(lines) and _CORNER_LINE.match(lines[i].strip()):
+            corner_positions = lines[i].strip()
+            i += 1
+
+        final_3f = ""
+        weight = ""
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+        if i < len(lines):
+            tail = lines[i].rstrip("\r\n").split("\t")
+            if tail and _AGARI.match(tail[0].strip()):
+                final_3f = tail[0].strip()
+                weight = tail[1].strip() if len(tail) > 1 else ""
+                i += 1
+
+        entries.append({
+            "finish_position": finish_position,
+            "name": name,
+            "time": time_value,
+            "corner_positions": corner_positions,
+            "final_3f": final_3f,
+            "weight": weight,
+        })
 
     entries.sort(key=lambda e: e["finish_position"])
     return entries
+
 
 def time_str_to_seconds(time_str: str) -> float:
     time_str = (time_str or "").strip().replace("：", ":")
     if not time_str:
         return 0.0
+    # 結果表の「1:55.5」の形式
     m = re.fullmatch(r"(\d+):(\d{1,2})(?:\.(\d+))?", time_str)
     if m:
         frac = int(m.group(3)) / 10 ** len(m.group(3)) if m.group(3) else 0.0
         return int(m.group(1)) * 60 + int(m.group(2)) + frac
+    # 基準タイムの「1.56.36」の形式
     parts = time_str.split(".")
     if len(parts) == 3:
         minutes, seconds, frac = parts

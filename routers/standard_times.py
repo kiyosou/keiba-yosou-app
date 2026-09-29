@@ -1,7 +1,7 @@
 import io
 import re
-import unicodedata
 import threading
+import unicodedata
 from fastapi import APIRouter, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
 from openpyxl import load_workbook
@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 from sqlmodel import Session, select
 from database import engine
 from models import StandardTime
+from analysis_models import StandardTimeExtra
 from templates import templates
 from parsing import time_str_to_seconds
 
@@ -17,17 +18,19 @@ router = APIRouter()
 VENUES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"]
 
 # 進捗状況を保存する場所(シンプルにメモリ上で管理)
-import_progress = {"total": 0, "done": 0, "finished": False, "imported_count": 0}
+import_progress = {"total": 0, "done": 0, "finished": False, "imported_count": 0, "error": ""}
 
-def find_header_index(header_row, *candidates) -> int | None:
+
+def find_header_index(header_row, *candidates):
+    wanted = [unicodedata.normalize("NFKC", c).strip() for c in candidates]
     for idx, cell in enumerate(header_row):
         if cell is None:
             continue
         cell_str = unicodedata.normalize("NFKC", str(cell)).strip()
-        for c in candidates:
-            if cell_str == c:
-                return idx
+        if cell_str in wanted:
+            return idx
     return None
+
 
 def run_import(venue: str, content: bytes):
     try:
@@ -52,12 +55,19 @@ def run_import(venue: str, content: bytes):
         print(f"[基準タイム取り込み] 開始: 全{total_rows}件")
 
         new_records = []
+        new_extras = []
 
         with Session(engine) as session:
+            # 既存データを先にまとめて削除(1件ずつの確認をなくす)
             existing_all = session.exec(
                 select(StandardTime).where(StandardTime.venue == venue)
             ).all()
             for ex in existing_all:
+                session.delete(ex)
+            existing_extra = session.exec(
+                select(StandardTimeExtra).where(StandardTimeExtra.venue == venue)
+            ).all()
+            for ex in existing_extra:
                 session.delete(ex)
             session.commit()
             print(f"[基準タイム取り込み] 既存{len(existing_all)}件を削除しました")
@@ -80,10 +90,10 @@ def run_import(venue: str, content: bytes):
                 idx_race_count = find_header_index(header_row, "レース数")
                 idx_winner_time = find_header_index(header_row, "1着タイム")
                 idx_top3_avg = find_header_index(header_row, "1～3着平均", "1〜3着平均", "連対平均")
+                idx_all_avg = find_header_index(header_row, "全馬平均")
                 idx_rpci = find_header_index(header_row, "RPCI")
                 idx_pci3 = find_header_index(header_row, "PCI3")
                 idx_ave3f = find_header_index(header_row, "Ave-3F")
-                idx_all_avg = find_header_index(header_row, "全馬平均")
                 idx_lap_avg = find_header_index(header_row, "ラップタイム平均")
 
                 if None in (idx_race_count, idx_winner_time, idx_pci3):
@@ -103,13 +113,13 @@ def run_import(venue: str, content: bytes):
                     race_count = row[idx_race_count] or 0
                     winner_time = str(row[idx_winner_time]) if row[idx_winner_time] else ""
                     top3_avg_time = str(row[idx_top3_avg]) if idx_top3_avg is not None and row[idx_top3_avg] else ""
+                    all_avg_time = str(row[idx_all_avg]) if idx_all_avg is not None and row[idx_all_avg] else ""
                     rpci = row[idx_rpci] if idx_rpci is not None else 0
                     pci3 = row[idx_pci3] or 0
                     ave_3f = row[idx_ave3f] if idx_ave3f is not None else 0
-                    all_avg_time = str(row[idx_all_avg]) if idx_all_avg is not None and row[idx_all_avg] else ""
                     lap_avg = str(row[idx_lap_avg]) if idx_lap_avg is not None and row[idx_lap_avg] else ""
 
-                    st = StandardTime(
+                    new_records.append(StandardTime(
                         venue=venue, surface=surface, distance=distance, course_type=course_type,
                         age=age, race_class=race_class,
                         race_count=int(race_count) if race_count else 0,
@@ -120,14 +130,21 @@ def run_import(venue: str, content: bytes):
                         rpci=float(rpci) if rpci else 0.0,
                         pci3=float(pci3) if pci3 else 0.0,
                         ave_3f=float(ave_3f) if ave_3f else 0.0,
+                    ))
+                    new_extras.append(StandardTimeExtra(
+                        venue=venue, surface=surface, distance=distance, course_type=course_type,
+                        age=age, race_class=race_class,
                         all_avg_seconds=time_str_to_seconds(all_avg_time),
                         lap_avg=lap_avg,
-                    )
-                    new_records.append(st)
+                    ))
                     import_progress["done"] += 1
+                    if import_progress["done"] % 20 == 0:
+                        print(f"[基準タイム取り込み] {import_progress['done']}/{total_rows}件 読み込み済み")
 
+            # ここでまとめて保存する
             print(f"[基準タイム取り込み] {len(new_records)}件をまとめて保存しています...")
             session.bulk_save_objects(new_records)
+            session.bulk_save_objects(new_extras)
             session.commit()
 
         import_progress["imported_count"] = len(new_records)
@@ -139,30 +156,37 @@ def run_import(venue: str, content: bytes):
         traceback.print_exc()
         import_progress["error"] = str(e)
         import_progress["finished"] = True
-        
+
+
 @router.get("/standard-times/import")
 def standard_time_import_page(request: Request):
     return templates.TemplateResponse("standard_time_import.html", {
         "request": request, "venues": VENUES,
     })
 
+
 @router.post("/standard-times/import")
 async def standard_time_import(venue: str = Form(...), file: UploadFile = File(...)):
     content = await file.read()
+    import_progress.update({"total": 0, "done": 0, "finished": False, "imported_count": 0, "error": ""})
     thread = threading.Thread(target=run_import, args=(venue, content))
     thread.start()
     return RedirectResponse(url="/standard-times/import/progress", status_code=303)
+
 
 @router.get("/standard-times/import/progress")
 def import_progress_page(request: Request):
     return templates.TemplateResponse("standard_time_progress.html", {"request": request})
 
+
 @router.get("/standard-times/import/status")
 def import_status():
     return import_progress
 
+
 AGE_ORDER = ["2歳", "3歳", "古馬", "全"]
 CLASS_ORDER = ["新馬", "未勝利", "500万", "1000万", "1600万", "OPEN", "平均等"]
+
 
 def sort_key(t):
     age = unicodedata.normalize("NFKC", t.age or "").strip()
@@ -170,6 +194,7 @@ def sort_key(t):
     age_index = AGE_ORDER.index(age) if age in AGE_ORDER else len(AGE_ORDER)
     class_index = CLASS_ORDER.index(race_class) if race_class in CLASS_ORDER else len(CLASS_ORDER)
     return (t.venue, t.surface, t.distance, t.course_type, age_index, class_index)
+
 
 @router.get("/standard-times")
 def standard_times_list(request: Request, venue: str = "", distance: str = ""):

@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field
 
+
 class Race(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     race_name: str
@@ -7,11 +8,11 @@ class Race(SQLModel, table=True):
     venue: str
     race_number: int
     surface: str
-    course_type: str = ""  # 外・内など(該当しない競馬場は空文字のまま)
+    course_type: str = ""  # 外・内など(該当しない競馬場は空文字)
     distance: int
     weather: str
     track_condition: str
-    lap_times: str = ""
+
 
 class Horse(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -26,6 +27,7 @@ class Horse(SQLModel, table=True):
     pace_score: float = 0.0
     odds: float | None = None
 
+
 class RaceResult(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     race_id: int = Field(foreign_key="race.id")
@@ -35,13 +37,14 @@ class RaceResult(SQLModel, table=True):
     hit_umaren: bool = False
     hit_umatan: bool = False
     hit_sanrenpuku: bool = False
-    review_memo: str = ""  # 回顧メモ
-    
+    review_memo: str = ""
+
 
 class FavoriteHorse(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     horse_name: str
     note: str = ""
+
 
 class TrackBias(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -49,6 +52,7 @@ class TrackBias(SQLModel, table=True):
     venue: str
     turf_bias: str = ""
     dirt_bias: str = ""
+
 
 class ActualResult(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -59,6 +63,7 @@ class ActualResult(SQLModel, table=True):
     corner_positions: str = ""
     final_3f: str = ""
     weight: str = ""
+
 
 class StandardTime(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -76,5 +81,3 @@ class StandardTime(SQLModel, table=True):
     rpci: float = 0.0
     pci3: float = 0.0
     ave_3f: float = 0.0
-    all_avg_seconds: float = 0.0
-    lap_avg: str = ""

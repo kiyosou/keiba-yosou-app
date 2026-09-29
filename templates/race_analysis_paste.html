@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}結果を貼り付けて分析{% endblock %}
+{% block content %}
+<h1>結果を貼り付けて分析</h1>
+<p class="page-nav">
+    <a href="/horses/ranking-page/{{ race_id }}">ランキングに戻る</a>
+    {% if has_results %} | <a href="/analysis/{{ race_id }}">今の分析を見る</a>{% endif %}
+</p>
+<h2>{{ race_label }}</h2>
+<div class="card">
+    <p>JRA公式サイトのレース結果ページで、着順の表から「ハロンタイム」の行までを範囲選択してコピーし、下に貼り付けてください(ハロンタイムは無くても構いません)。登録と同時に、分析を表示します。</p>
+    {% if has_results %}
+    <p class="empty-message">このレースには結果がすでに登録されています。貼り付けると、登録済みの結果を置き換えます。</p>
+    {% endif %}
+    {% if error %}
+    <p class="empty-message">{{ error }}</p>
+    {% endif %}
+    <form action="/analysis/{{ race_id }}/paste" method="post">
+        <textarea name="raw_text" rows="14" style="width:100%; font-family:inherit; padding:0.6rem; border:1px solid var(--border); border-radius:4px;">{{ raw_text }}</textarea>
+        <br><br>
+        <button type="submit">登録して分析する</button>
+    </form>
+</div>
+{% endblock %}

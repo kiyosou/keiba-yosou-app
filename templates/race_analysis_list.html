@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}レース分析{% endblock %}
+{% block content %}
+<h1>レース分析</h1>
+<p>結果を登録済みのレースから、分析するレースを選んでください。</p>
+{% if races %}
+<ul class="race-list">
+    {% for r in races %}
+    <li>
+        <a href="/analysis/{{ r.id }}">{{ r.label }}</a>
+        <span class="item-actions">{{ r.count }}頭</span>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="empty-message">結果を登録したレースがまだありません。ランキング画面の「結果を貼り付けて登録」から着順表を登録してください。</p>
+{% endif %}
+{% endblock %}

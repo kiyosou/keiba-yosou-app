@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}レース分析{% endblock %}
+{% block content %}
+<h1>レース分析</h1>
+<p class="page-nav">
+    <a href="/analysis">分析するレースの一覧</a> |
+    <a href="/horses/ranking-page/{{ race_id }}">ランキングに戻る</a> |
+    <a href="/analysis/{{ race_id }}/paste">結果を貼り付け直す</a> |
+    <a href="/results/list">結果一覧</a>
+</p>
+
+{% if saved %}
+<div class="card">
+    <p>{{ saved }}頭の結果を登録しました{% if laps_saved %}(ハロンタイムも登録){% endif %}。{% if going %}馬場状態を「{{ going }}」に更新しました。{% endif %}</p>
+    {% if mismatch %}
+    <p class="empty-message">注意: 貼り付けた馬名が、このレースに登録済みの出走馬とほとんど一致しません。別のレースの結果を貼り付けていないか確認してください。</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if not a.has_results %}
+<h2>{{ race_label }}</h2>
+<p class="empty-message">このレースの結果がまだ登録されていません。結果を貼り付けると、登録と同時に分析を表示します。</p>
+<p class="page-nav"><a href="/analysis/{{ race_id }}/paste">結果を貼り付けて分析する</a></p>
+
+{% else %}
+<h2>{{ race_label }}</h2>
+<p>{{ a.conditions }}</p>
+
+<h2>総合評価</h2>
+<div class="card">
+    {% if a.verdict %}
+    <p><strong>{{ a.verdict.label }}</strong></p>
+    <p>{{ a.verdict.text }}</p>
+    {% else %}
+    <p class="empty-message">基準タイムと比較できないため、総合評価は出せません。</p>
+    {% endif %}
+</div>
+
+{% if a.metrics %}
+<h2>基準タイムとの比較</h2>
+<div class="wide-table">
+<table>
+    <tr><th>指標</th><th>このレース</th><th>基準</th><th>差</th></tr>
+    {% for m in a.metrics %}
+    <tr>
+        <td>{{ m.name }}</td>
+        <td>{{ m.actual }}</td>
+        <td>{{ m.base }}</td>
+        <td class="{{ m.cls }}">{{ m.diff }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% endif %}
+
+{% if a.pace %}
+<h2>ペース</h2>
+<div class="card">
+    {% for line in a.pace.lines %}
+    <p>{{ line }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2>ラップ</h2>
+<div class="card">
+    {% if a.laps %}
+        {% for line in a.laps.lines %}
+        <p>{{ line }}</p>
+        {% endfor %}
+        <div class="wide-table">
+        <table>
+            <tr><th>地点</th><th>ラップ</th>{% if a.laps.compared %}<th>基準</th><th>差(+は基準より遅い)</th>{% endif %}</tr>
+            {% for l in a.laps.table %}
+            <tr>
+                <td>{{ l.point }}</td>
+                <td>{{ l.lap }}</td>
+                {% if a.laps.compared %}
+                <td>{{ l.base }}</td>
+                <td class="{{ l.cls }}">{{ l.diff }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+    {% else %}
+        <p class="empty-message">ハロンタイムが未登録です。結果ページの「ハロンタイム」の行まで含めて貼り付けるか、下の欄から登録すると、RPCIとラップの分析が表示されます。</p>
+    {% endif %}
+    <form action="/analysis/{{ race_id }}/laps" method="post" class="form-grid">
+        <label class="full">ハロンタイム(結果ページの「ハロンタイム」の行をそのまま貼り付け)
+            <textarea name="lap_text" rows="2" style="width:100%; font-family:inherit; padding:0.6rem; border:1px solid var(--border); border-radius:4px;" placeholder="ハロンタイム 12.6 - 11.8 - 12.3 - ..."></textarea>
+        </label>
+        <div class="full">
+            <button type="submit">{% if a.laps %}登録し直す{% else %}登録する{% endif %}</button>
+        </div>
+    </form>
+    {% if lap_error %}
+    <p class="empty-message">ハロンタイムを読み取れませんでした。「ハロンタイム」の行を確認してください。</p>
+    {% endif %}
+</div>
+
+{% if a.development %}
+<h2>展開(通過順位)</h2>
+<div class="card">
+    {% for line in a.development.lines %}
+    <p>{{ line }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2>着順ごとの内容</h2>
+<div class="wide-table">
+<table>
+    <tr>
+        <th>着順</th><th>馬名</th><th>タイム</th><th>着差(秒)</th><th>上がり3F</th><th>PCI</th><th>通過順位</th><th>スコア換算(参考)</th>
+    </tr>
+    {% for r in a.rows %}
+    <tr>
+        <td>{{ r.finish }}</td>
+        <td>{{ r.name }}</td>
+        <td>{{ r.time }}</td>
+        <td>{{ r.gap }}</td>
+        <td>{{ r.last3f }}{% if r.best3f %} ★{% endif %}</td>
+        <td>{{ r.pci }}</td>
+        <td>{{ r.corners }}</td>
+        <td>{{ r.score }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+<p class="page-nav">★は最速の上がり。スコア換算は、出馬表の自動スコアリングと同じ式(5点 + 基準との差×4、0〜10点)で、この時計が次走で評価される点数の目安です。</p>
+
+<h2>注意点</h2>
+<div class="card">
+    <ul>
+        {% for n in a.notes %}
+        <li>{{ n }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}
