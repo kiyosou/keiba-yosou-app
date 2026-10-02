@@ -11,19 +11,38 @@
 <div class="app-layout">
     <aside class="sidebar">
         <h2>競馬予想アプリ</h2>
-        <nav>
-            <a href="/">ホーム</a>
-            <a href="/search">検索</a>
-            <a href="/races/add">レース登録</a>
-            <a href="/horses/new">馬データ登録</a>
-            <a href="/standard-times">基準タイム一覧</a>
-            <a href="/races">レース一覧・ランキング</a>
-            <a href="/horses">馬一覧</a>
-            <a href="/results/input">結果入力</a>
-            <a href="/results/list">結果一覧</a>
-            <a href="/analysis">レース分析</a>
-            <a href="/results/stats">的中率</a>
-            <a href="/favorites">お気に入り馬</a>
+        <nav class="nav-groups">
+            <a href="/" class="nav-top">ホーム</a>
+            <a href="/search" class="nav-top">検索</a>
+
+            <div class="nav-group">
+                <span class="nav-group-label">登録系 ▸</span>
+                <div class="nav-submenu">
+                    <a href="/races/add">レース登録</a>
+                    <a href="/horses/new">馬データ登録</a>
+                    <a href="/results/input">結果入力</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-group-label">一覧系 ▸</span>
+                <div class="nav-submenu">
+                    <a href="/races">レース一覧・ランキング</a>
+                    <a href="/horses">馬一覧</a>
+                    <a href="/results/list">結果一覧</a>
+                    <a href="/results/stats">的中率</a>
+                    <a href="/standard-times">基準タイム一覧</a>
+                    <a href="/favorites">お気に入り馬</a>
+                    <a href="/analysis">レース分析</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-group-label">その他 ▸</span>
+                <div class="nav-submenu">
+                    <a href="/standard-times/import">基準タイム取り込み</a>
+                </div>
+            </div>
         </nav>
         <button class="theme-toggle" onclick="toggleTheme()">🌙 ダークモード切替</button>
     </aside>
